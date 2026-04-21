@@ -27,7 +27,11 @@ pub struct Claims {
     pub org: Option<Uuid>,
 }
 
-pub fn issue_token(_config: &JwtConfig, _user_id: Uuid, _org: Option<Uuid>) -> anyhow::Result<String> {
+pub fn issue_token(
+    _config: &JwtConfig,
+    _user_id: Uuid,
+    _org: Option<Uuid>,
+) -> anyhow::Result<String> {
     // TODO: jsonwebtoken encode
     anyhow::bail!("issue_token not yet implemented")
 }
