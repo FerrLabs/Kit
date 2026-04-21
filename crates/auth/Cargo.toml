@@ -1,0 +1,34 @@
+[package]
+name = "ferrlabs-auth"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Authentication for FerrLabs APIs: JWT, sessions, OAuth, password hashing, TOTP."
+
+[dependencies]
+ferrlabs-errors = { workspace = true }
+ferrlabs-types = { workspace = true }
+ferrlabs-crypto = { workspace = true }
+ferrlabs-db = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+argon2 = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
+base64 = { workspace = true }
+jsonwebtoken = "9"
+totp-rs = "5"
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true
