@@ -4,9 +4,10 @@
 //! `tracing-subscriber` with JSON output for log collectors and OTLP gRPC
 //! export if `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
 //!
-//! Metrics live in [`metrics`], ported from the FerrFlow-Cloud API.
-
-pub mod metrics;
+//! Unmigrated: `_unmigrated/metrics.rs.unmigrated` is the raw port of
+//! Application's Prometheus counters — needs registry injection before
+//! it compiles standalone. Tracked in
+//! [Kit#4](https://github.com/FerrLabs/Kit/issues/4).
 
 use anyhow::Context;
 
