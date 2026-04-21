@@ -5,14 +5,25 @@
 //!
 //! ## Modules
 //!
-//! - [`password`] — argon2id hashing + verification
-//! - [`jwt`] — issuing and verifying signed access tokens
-//! - [`session`] — long-lived refresh sessions stored in Postgres
-//! - [`oauth`] — OAuth providers (Google, GitHub)
-//! - [`totp`] — 2FA seed generation and verification
-//! - [`middleware`] — axum extractor to pull the authenticated user
+//! - [`password`] — argon2id hashing + verification (implemented)
+//! - [`jwt`] — access token issuance / verification (scaffold — TODO)
+//! - [`jwt_middleware`] — axum extractor ported from FerrFlow-Cloud
+//! - [`hmac`] — HMAC-auth for internal / service-to-service calls
+//! - [`session`] — long-lived refresh sessions in Postgres (TODO)
+//! - [`oauth`] — OAuth providers (Google, GitHub) (TODO)
+//! - [`totp`] — 2FA seed generation and verification (TODO)
+//! - [`middleware`] — re-exports the axum extractor type
+//!
+//! ## Integration status
+//!
+//! `jwt_middleware` and `hmac` modules were ported wholesale from the
+//! FerrFlow-Cloud API. They still reference Application-specific types
+//! (`AppState`, `SharedKeyProvider`). A follow-up PR will parameterize
+//! these via traits so the crate is genuinely reusable.
 
+pub mod hmac;
 pub mod jwt;
+pub mod jwt_middleware;
 pub mod middleware;
 pub mod oauth;
 pub mod password;

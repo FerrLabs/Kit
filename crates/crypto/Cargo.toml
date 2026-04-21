@@ -6,19 +6,20 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "Envelope encryption with pluggable KMS providers (AWS, GCP, Vault, static)."
+description = "Envelope encryption + GCP Cloud KMS integration for FerrLabs backends."
 
 [dependencies]
 ferrlabs-errors = { workspace = true }
 aes-gcm = { workspace = true }
-rand = { workspace = true }
-sha2 = { workspace = true }
-base64 = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
 async-trait = "0.1"
+tokio = { workspace = true }
+anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
+base64 = { workspace = true }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+gcp_auth = "0.12"
 
 [lints]
 workspace = true
