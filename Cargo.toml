@@ -1,0 +1,77 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/auth",
+    "crates/billing",
+    "crates/crypto",
+    "crates/db",
+    "crates/errors",
+    "crates/middleware",
+    "crates/telemetry",
+    "crates/types",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MPL-2.0"
+repository = "https://github.com/FerrLabs/Kit"
+authors = ["FerrLabs"]
+rust-version = "1.80"
+
+[workspace.dependencies]
+# Shared across all crates
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+
+# HTTP stack (used by most crates)
+axum = "0.8"
+tower = "0.5"
+tower-http = "0.6"
+http = "1"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# DB
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+
+# Crypto
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.9"
+sha2 = "0.11"
+hmac = "0.13"
+hex = "0.4"
+base64 = "0.22"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+opentelemetry = "0.29"
+
+# Validation
+validator = "0.19"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Internal crates
+ferrlabs-errors = { path = "crates/errors" }
+ferrlabs-types = { path = "crates/types" }
+ferrlabs-db = { path = "crates/db" }
+ferrlabs-crypto = { path = "crates/crypto" }
+ferrlabs-auth = { path = "crates/auth" }
+ferrlabs-billing = { path = "crates/billing" }
+ferrlabs-middleware = { path = "crates/middleware" }
+ferrlabs-telemetry = { path = "crates/telemetry" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
