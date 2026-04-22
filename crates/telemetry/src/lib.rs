@@ -1,4 +1,4 @@
-//! Tracing, metrics, and structured logging for FerrLabs APIs.
+//! Tracing, metrics, and structured logging for `FerrLabs` APIs.
 //!
 //! Call [`init`] at the top of `main()` with the service name — sets up
 //! `tracing-subscriber` with JSON output for log collectors and OTLP gRPC
@@ -11,10 +11,10 @@
 
 pub struct TelemetryGuard;
 
-pub fn init(_service_name: &str) -> anyhow::Result<TelemetryGuard> {
+pub fn init(service_name: &str) -> anyhow::Result<TelemetryGuard> {
     // TODO: wire up tracing_subscriber registry with EnvFilter + JSON fmt
     // + OTLP exporter, flush on Drop.
-    let _ = _service_name;
+    let _ = service_name;
     Ok(TelemetryGuard)
 }
 

@@ -1,4 +1,4 @@
-//! HTTP middleware layers for FerrLabs APIs.
+//! HTTP middleware layers for `FerrLabs` APIs.
 //!
 //! Stacked in every API's `main.rs` in this order:
 //! request ID → trace → CORS → security headers → rate limit → timeout.
