@@ -14,7 +14,11 @@ ferrlabs-types = { workspace = true }
 ferrlabs-db = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-async-stripe = { version = "0.40", default-features = false, features = ["runtime-tokio-hyper-rustls", "billing", "webhook-events"] }
+# TODO: re-enable once async-stripe publishes a version that compiles on
+# stable Rust. 0.40.2 has unresolved imports in its own source
+# (CheckoutSessionItem, AccountCapabilities, PaymentLink). Billing is
+# scaffold-only right now so the dep is unused.
+# async-stripe = { version = "0.40", default-features = false, features = ["runtime-tokio-hyper-rustls", "billing", "webhook-events"] }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
