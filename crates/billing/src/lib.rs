@@ -1,8 +1,8 @@
-//! Stripe integration for FerrLabs billing.
+//! Stripe integration for `FerrLabs` billing.
 //!
-//! One Stripe customer per FerrLabs organization. One subscription item per
-//! (org, product) pair — so an org can subscribe to FerrFlow Premium and
-//! FerrVault Team independently, all on one invoice.
+//! One Stripe customer per `FerrLabs` organization. One subscription item per
+//! (org, product) pair — so an org can subscribe to `FerrFlow` Premium and
+//! `FerrVault` Team independently, all on one invoice.
 //!
 //! ## Products
 //!

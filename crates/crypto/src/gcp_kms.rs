@@ -1,11 +1,11 @@
 //! Minimal Google Cloud KMS client.
 //!
-//! Only the three operations FerrFlow needs —
+//! Only the three operations `FerrFlow` needs —
 //!
-//! - **`encrypt`** / **`decrypt`** against a symmetric CryptoKey for the KEK.
+//! - **`encrypt`** / **`decrypt`** against a symmetric `CryptoKey` for the KEK.
 //!   The plaintext DEK never leaves Google's infrastructure; we store the
 //!   opaque base64 ciphertext in Postgres and ask GCP to unwrap on reveal.
-//! - **`asymmetricSign`** against an Ed25519 CryptoKeyVersion for install
+//! - **`asymmetricSign`** against an Ed25519 `CryptoKeyVersion` for install
 //!   licenses. GCP signs the raw JWT `<header>.<payload>` and returns the
 //!   64-byte Ed25519 signature; we assemble the final compact JWT.
 //!
@@ -65,7 +65,7 @@ impl GcpKmsClient {
         Ok(token.as_str().to_string())
     }
 
-    /// Encrypt `plaintext` with the symmetric CryptoKey at `key_name`
+    /// Encrypt `plaintext` with the symmetric `CryptoKey` at `key_name`
     /// (full resource path — `projects/*/locations/*/keyRings/*/cryptoKeys/*`).
     /// Returns the opaque base64 ciphertext as emitted by GCP.
     pub async fn encrypt(&self, key_name: &str, plaintext: &[u8]) -> Result<String, KmsError> {
@@ -110,12 +110,12 @@ impl GcpKmsClient {
             .map_err(|e| KmsError::Protocol(format!("bad base64 in plaintext: {e}")))
     }
 
-    /// Sign `message` with an Ed25519 CryptoKeyVersion. `version_name` must
+    /// Sign `message` with an Ed25519 `CryptoKeyVersion`. `version_name` must
     /// be the FULL resource path down to the version —
     /// `projects/*/locations/*/keyRings/*/cryptoKeys/*/cryptoKeyVersions/*`.
     ///
     /// Ed25519 signs the message directly (no pre-hash), which matches JWT
-    /// EdDSA semantics; we just concatenate the returned signature into the
+    /// `EdDSA` semantics; we just concatenate the returned signature into the
     /// JWT compact form.
     pub async fn asymmetric_sign_ed25519(
         &self,

@@ -1,6 +1,6 @@
-//! Common error types for FerrLabs APIs.
+//! Common error types for `FerrLabs` APIs.
 //!
-//! Every FerrLabs Rust backend converts its errors through [`ApiError`] so
+//! Every `FerrLabs` Rust backend converts its errors through [`ApiError`] so
 //! responses have a consistent shape (JSON body, stable error codes per
 //! domain, no leaked internals).
 //!

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 //! Stable machine-readable error codes, grouped by domain.
 //!
-//! Codes are SCREAMING_SNAKE_CASE strings, prefixed with the domain. They are
+//! Codes are `SCREAMING_SNAKE_CASE` strings, prefixed with the domain. They are
 //! part of the public API contract — renaming one is a breaking change.
 //!
 //! Domains:

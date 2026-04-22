@@ -1,6 +1,6 @@
-//! Authentication primitives for FerrLabs APIs.
+//! Authentication primitives for `FerrLabs` APIs.
 //!
-//! One login session covers all FerrLabs products — a JWT issued here is
+//! One login session covers all `FerrLabs` products — a JWT issued here is
 //! accepted by FerrFlow-Cloud, FerrVault-Cloud, and any future product.
 //!
 //! ## Implemented

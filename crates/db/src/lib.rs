@@ -1,4 +1,4 @@
-//! PostgreSQL connection pool and helpers for FerrLabs APIs.
+//! `PostgreSQL` connection pool and helpers for `FerrLabs` APIs.
 //!
 //! Provides a shared `sqlx::PgPool` setup and a `Tx` type alias for
 //! transaction-scoped queries. Per-product migrations live in each Cloud
@@ -9,7 +9,7 @@ use anyhow::Context;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
 
-/// Type alias for a transaction on the shared FerrLabs Postgres pool.
+/// Type alias for a transaction on the shared `FerrLabs` Postgres pool.
 pub type Tx<'a> = sqlx::Transaction<'a, sqlx::Postgres>;
 
 /// Configuration for the shared Postgres pool.

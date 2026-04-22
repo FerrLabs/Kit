@@ -2,14 +2,14 @@
 //!
 //! Secrets are encrypted with per-row DEKs (data encryption keys, AES-GCM-256);
 //! DEKs are wrapped by a KEK (key encryption key) that's either a raw local
-//! byte array (dev / self-host) or a GCP Cloud KMS CryptoKey (hosted).
+//! byte array (dev / self-host) or a GCP Cloud KMS `CryptoKey` (hosted).
 //!
 //! The [`KeyProvider`] trait abstracts the KEK so the rest of the code
 //! doesn't care where the unwrap happens. A short-lived in-memory cache
 //! amortises round-trips to the managed backend — revealing 50 secrets from
 //! a vault becomes 1 KMS call + 49 cache hits instead of 50 round-trips.
 //!
-//! TODO: add AWS KMS and HashiCorp Vault Transit providers behind the same
+//! TODO: add AWS KMS and `HashiCorp` Vault Transit providers behind the same
 //! [`KeyProvider`] trait for BYOK self-host customers.
 
 pub mod gcp_kms;
@@ -31,6 +31,7 @@ fn rng() -> impl RngCore {
     aes_gcm::aead::OsRng
 }
 
+#[must_use]
 pub fn generate_dek() -> Vec<u8> {
     let mut dek = vec![0u8; 32];
     rng().fill_bytes(&mut dek);
@@ -47,7 +48,7 @@ pub fn encrypt_value(plaintext: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Er
 
     let ciphertext = cipher
         .encrypt(nonce, plaintext)
-        .map_err(|e| anyhow::anyhow!("encryption failed: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("encryption failed: {e}"))?;
 
     let mut result = Vec::with_capacity(NONCE_SIZE + ciphertext.len());
     result.extend_from_slice(&nonce_bytes);
@@ -68,7 +69,7 @@ pub fn decrypt_value(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Er
 
     cipher
         .decrypt(nonce, ciphertext)
-        .map_err(|e| anyhow::anyhow!("decryption failed: {}", e))
+        .map_err(|e| anyhow::anyhow!("decryption failed: {e}"))
 }
 
 pub fn parse_kek(hex_key: &str) -> Result<Vec<u8>, anyhow::Error> {
@@ -114,6 +115,7 @@ pub trait KeyProvider: Send + Sync {
 /// tell the backends apart by looking at the stored bytes alone.
 pub const GCP_KMS_PREFIX: &[u8] = b"gcp-kms:";
 
+#[must_use]
 pub fn is_gcp_kms_ciphertext(bytes: &[u8]) -> bool {
     bytes.starts_with(GCP_KMS_PREFIX)
 }
@@ -131,6 +133,7 @@ pub struct LocalKek {
 }
 
 impl LocalKek {
+    #[must_use]
     pub fn new(kek: Vec<u8>) -> Self {
         Self { kek }
     }
@@ -167,7 +170,7 @@ pub type SharedKeyProvider = Arc<dyn KeyProvider>;
 // GCP Cloud KMS backend
 // ---------------------------------------------------------------------------
 
-/// Wraps DEKs against a GCP Cloud KMS CryptoKey. The key material never
+/// Wraps DEKs against a GCP Cloud KMS `CryptoKey`. The key material never
 /// leaves Google's infrastructure — the API calls `encrypt`/`decrypt` on the
 /// managed service and stores GCP's base64 ciphertext, prefixed with
 /// `gcp-kms:` so the unwrap dispatch can route correctly.
@@ -188,6 +191,7 @@ pub struct GcpKmsKek {
 }
 
 impl GcpKmsKek {
+    #[must_use]
     pub fn new(client: crate::gcp_kms::GcpKmsClient, key_name: String) -> Self {
         Self {
             client,
@@ -241,7 +245,7 @@ impl KeyProvider for GcpKmsKek {
             .client
             .encrypt(&self.key_name, plaintext_dek)
             .await
-            .map_err(|e| anyhow::anyhow!("gcp kms encrypt: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("gcp kms encrypt: {e}"))?;
         // `gcp-kms:` + ASCII base64 ciphertext. Simple string concat; the
         // prefix is just a marker for the backend-routing in `unwrap_dek`.
         let mut out = Vec::with_capacity(GCP_KMS_PREFIX.len() + ct.len());
@@ -266,7 +270,7 @@ impl KeyProvider for GcpKmsKek {
             .client
             .decrypt(&self.key_name, ct)
             .await
-            .map_err(|e| anyhow::anyhow!("gcp kms decrypt: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("gcp kms decrypt: {e}"))?;
         self.cache_put(encrypted_dek.to_vec(), plaintext.clone())
             .await;
         Ok(plaintext)
@@ -289,7 +293,7 @@ impl KeyProvider for GcpKmsKek {
         self.client
             .encrypt(&self.key_name, b"readyz-probe")
             .await
-            .map_err(|e| anyhow::anyhow!("gcp kms health probe: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("gcp kms health probe: {e}"))?;
 
         *self.last_health_ok.lock().await = Some(Instant::now());
         Ok(())

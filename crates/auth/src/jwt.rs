@@ -1,4 +1,4 @@
-//! JWT access tokens for FerrLabs APIs.
+//! JWT access tokens for `FerrLabs` APIs.
 //!
 //! Signed with HS256 for now (single-region, single-region secret). Switch
 //! to RS256 with a rotating JWKS endpoint before going multi-region.

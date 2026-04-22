@@ -1,4 +1,4 @@
-//! Shared domain types for the FerrLabs platform.
+//! Shared domain types for the `FerrLabs` platform.
 //!
 //! Every Cloud repo (FerrFlow-Cloud, FerrVault-Cloud, FerrLabs-Cloud) consumes
 //! these types via the Kit workspace dependency, so `User`, `Organization`,
@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// A user of the FerrLabs platform — unified across all products.
+/// A user of the `FerrLabs` platform — unified across all products.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
@@ -59,7 +59,7 @@ pub enum Plan {
     Enterprise,
 }
 
-/// Which FerrLabs product a subscription or permission applies to.
+/// Which `FerrLabs` product a subscription or permission applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Product {
