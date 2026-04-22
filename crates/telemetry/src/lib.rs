@@ -9,15 +9,13 @@
 //! it compiles standalone. Tracked in
 //! [Kit#4](https://github.com/FerrLabs/Kit/issues/4).
 
-use anyhow::Context;
-
 pub struct TelemetryGuard;
 
 pub fn init(_service_name: &str) -> anyhow::Result<TelemetryGuard> {
     // TODO: wire up tracing_subscriber registry with EnvFilter + JSON fmt
     // + OTLP exporter, flush on Drop.
     let _ = _service_name;
-    Ok(TelemetryGuard).context("telemetry init placeholder")
+    Ok(TelemetryGuard)
 }
 
 impl Drop for TelemetryGuard {
