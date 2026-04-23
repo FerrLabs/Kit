@@ -209,7 +209,7 @@ pub type ApiResult<T> = Result<T, ApiError>;
 mod tests {
     use super::*;
 
-    fn check(err: ApiError, expected_status: StatusCode, expected_code: &str) {
+    fn check(err: &ApiError, expected_status: StatusCode, expected_code: &str) {
         let (status, code, _) = err.parts();
         assert_eq!(status, expected_status, "status mismatch for {code}");
         assert_eq!(code, expected_code);
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn database_error_maps_to_internal_database() {
         check(
-            ApiError::Database(sqlx::Error::PoolClosed),
+            &ApiError::Database(sqlx::Error::PoolClosed),
             StatusCode::INTERNAL_SERVER_ERROR,
             error_code::INTERNAL_DATABASE,
         );
@@ -227,7 +227,7 @@ mod tests {
     #[test]
     fn internal_error_maps_to_internal_server_error() {
         check(
-            ApiError::Internal(anyhow::anyhow!("boom")),
+            &ApiError::Internal(anyhow::anyhow!("boom")),
             StatusCode::INTERNAL_SERVER_ERROR,
             error_code::INTERNAL_SERVER_ERROR,
         );
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn bad_request_default_code() {
         check(
-            ApiError::BadRequest("nope".into()),
+            &ApiError::BadRequest("nope".into()),
             StatusCode::BAD_REQUEST,
             error_code::BAD_REQUEST,
         );
@@ -245,7 +245,7 @@ mod tests {
     #[test]
     fn validation_default_code() {
         check(
-            ApiError::Validation("bad".into()),
+            &ApiError::Validation("bad".into()),
             StatusCode::BAD_REQUEST,
             error_code::VALIDATION_FAILED,
         );
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn rate_limit_exceeded_code() {
         check(
-            ApiError::RateLimitExceeded,
+            &ApiError::RateLimitExceeded,
             StatusCode::TOO_MANY_REQUESTS,
             error_code::RATE_LIMIT_EXCEEDED,
         );
@@ -263,7 +263,7 @@ mod tests {
     #[test]
     fn unauthorized_code() {
         check(
-            ApiError::Unauthorized,
+            &ApiError::Unauthorized,
             StatusCode::UNAUTHORIZED,
             error_code::AUTH_UNAUTHORIZED,
         );
@@ -272,7 +272,7 @@ mod tests {
     #[test]
     fn forbidden_code() {
         check(
-            ApiError::Forbidden("no".into()),
+            &ApiError::Forbidden("no".into()),
             StatusCode::FORBIDDEN,
             error_code::AUTH_FORBIDDEN,
         );
@@ -281,7 +281,7 @@ mod tests {
     #[test]
     fn not_found_legacy_code() {
         check(
-            ApiError::NotFound("x".into()),
+            &ApiError::NotFound("x".into()),
             StatusCode::NOT_FOUND,
             error_code::BAD_REQUEST,
         );
@@ -290,7 +290,7 @@ mod tests {
     #[test]
     fn plan_limit_exceeded_code() {
         check(
-            ApiError::PlanLimitExceeded("plan".into()),
+            &ApiError::PlanLimitExceeded("plan".into()),
             StatusCode::FORBIDDEN,
             error_code::PLAN_LIMIT_EXCEEDED,
         );
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn gone_code() {
         check(
-            ApiError::Gone("expired".into()),
+            &ApiError::Gone("expired".into()),
             StatusCode::GONE,
             error_code::GONE,
         );
@@ -308,7 +308,7 @@ mod tests {
     #[test]
     fn email_not_verified_code() {
         check(
-            ApiError::EmailNotVerified,
+            &ApiError::EmailNotVerified,
             StatusCode::FORBIDDEN,
             error_code::AUTH_EMAIL_NOT_VERIFIED,
         );
@@ -317,27 +317,27 @@ mod tests {
     #[test]
     fn coded_helper_preserves_code_and_status() {
         check(
-            ApiError::not_found(error_code::ORG_NOT_FOUND, "nope"),
+            &ApiError::not_found(error_code::ORG_NOT_FOUND, "nope"),
             StatusCode::NOT_FOUND,
             error_code::ORG_NOT_FOUND,
         );
         check(
-            ApiError::bad_request(error_code::USER_EMAIL_TAKEN, "taken"),
+            &ApiError::bad_request(error_code::USER_EMAIL_TAKEN, "taken"),
             StatusCode::BAD_REQUEST,
             error_code::USER_EMAIL_TAKEN,
         );
         check(
-            ApiError::forbidden(error_code::ADMIN_STAFF_ONLY, "staff"),
+            &ApiError::forbidden(error_code::ADMIN_STAFF_ONLY, "staff"),
             StatusCode::FORBIDDEN,
             error_code::ADMIN_STAFF_ONLY,
         );
         check(
-            ApiError::conflict(error_code::CLUSTER_NAME_TAKEN, "dup"),
+            &ApiError::conflict(error_code::CLUSTER_NAME_TAKEN, "dup"),
             StatusCode::CONFLICT,
             error_code::CLUSTER_NAME_TAKEN,
         );
         check(
-            ApiError::gone(error_code::AUTH_VERIFICATION_CODE_EXPIRED, "expired"),
+            &ApiError::gone(error_code::AUTH_VERIFICATION_CODE_EXPIRED, "expired"),
             StatusCode::GONE,
             error_code::AUTH_VERIFICATION_CODE_EXPIRED,
         );
