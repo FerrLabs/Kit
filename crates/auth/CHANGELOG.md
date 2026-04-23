@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-04-23
+
+### Features
+
+- feat(auth): JWT (ed25519) + session store with rotation-based theft detection (#29)
+
 ## [0.2.0] - 2026-04-23
 
 ### Features
