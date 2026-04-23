@@ -1,0 +1,81 @@
+{
+  "$schema": "https://ferrflow.com/schema/ferrflow.json",
+  "workspace": {
+    "versioning": "zerover",
+    "tagTemplate": "{name}@v{version}",
+    "recoverMissedReleases": true,
+    "commitPerPackage": false
+  },
+  "package": [
+    {
+      "name": "ferrlabs-errors",
+      "path": "crates/errors",
+      "changelog": "crates/errors/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/errors/Cargo.toml", "format": "toml" }
+      ]
+    },
+    {
+      "name": "ferrlabs-types",
+      "path": "crates/types",
+      "changelog": "crates/types/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/types/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors"]
+    },
+    {
+      "name": "ferrlabs-crypto",
+      "path": "crates/crypto",
+      "changelog": "crates/crypto/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/crypto/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors"]
+    },
+    {
+      "name": "ferrlabs-db",
+      "path": "crates/db",
+      "changelog": "crates/db/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/db/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"]
+    },
+    {
+      "name": "ferrlabs-auth",
+      "path": "crates/auth",
+      "changelog": "crates/auth/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/auth/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-crypto", "ferrlabs-db"]
+    },
+    {
+      "name": "ferrlabs-billing",
+      "path": "crates/billing",
+      "changelog": "crates/billing/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/billing/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"]
+    },
+    {
+      "name": "ferrlabs-middleware",
+      "path": "crates/middleware",
+      "changelog": "crates/middleware/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/middleware/Cargo.toml", "format": "toml" }
+      ],
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-auth"]
+    },
+    {
+      "name": "ferrlabs-telemetry",
+      "path": "crates/telemetry",
+      "changelog": "crates/telemetry/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/telemetry/Cargo.toml", "format": "toml" }
+      ]
+    }
+  ]
+}
