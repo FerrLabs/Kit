@@ -12,8 +12,8 @@ description = "Tracing, metrics, and structured logging setup for FerrLabs APIs.
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
 opentelemetry = { workspace = true }
-opentelemetry_sdk = "0.29"
-opentelemetry-otlp = { version = "0.29", features = ["grpc-tonic"] }
+opentelemetry_sdk = "0.31"
+opentelemetry-otlp = { version = "0.31", features = ["grpc-tonic"] }
 tracing-opentelemetry = "0.30"
 anyhow = { workspace = true }
 
