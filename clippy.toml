@@ -1,0 +1,27 @@
+# Clippy configuration for the Kit workspace.
+#
+# Proper nouns we use constantly and do not want to wrap in backticks in doc
+# comments. Extend this list when adding new brand names / protocol names.
+doc-valid-idents = [
+    # Brand / org
+    "FerrLabs",
+    "FerrFlow",
+    "FerrVault",
+    "FerrTrack",
+    "FerrGrowth",
+    # Protocols / standards
+    "OAuth",
+    "OAuth2",
+    "TOTP",
+    "CSRF",
+    "GitHub",
+    "PostgreSQL",
+    "JSON",
+    "SHA-256",
+    "SHA256",
+    "SubjectPublicKeyInfo",
+    "PKCS#8",
+    "EdDSA",
+    # Keep clippy's own defaults too
+    "..",
+]
