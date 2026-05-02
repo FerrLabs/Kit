@@ -33,9 +33,11 @@ pub struct Membership {
     pub user_id: Uuid,
     pub organization_id: Uuid,
     pub role: Role,
-    /// Per-product authorization — an admin of Flow may be a viewer of Vault.
     pub ferrflow_role: Option<Role>,
     pub ferrvault_role: Option<Role>,
+    pub ferrtrack_role: Option<Role>,
+    pub ferrgrowth_role: Option<Role>,
+    pub ferrfleet_role: Option<Role>,
     pub joined_at: DateTime<Utc>,
 }
 
@@ -49,20 +51,80 @@ pub enum Role {
     Viewer,
 }
 
-/// Subscription plan — one per (organization, product).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum Plan {
     Free,
+    Pro,
     Team,
-    Business,
     Enterprise,
 }
 
-/// Which `FerrLabs` product a subscription or permission applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum Product {
     FerrFlow,
     FerrVault,
+    FerrTrack,
+    FerrGrowth,
+    FerrFleet,
+}
+
+impl Product {
+    pub fn slug(&self) -> &'static str {
+        match self {
+            Product::FerrFlow => "ferrflow",
+            Product::FerrVault => "ferrvault",
+            Product::FerrTrack => "ferrtrack",
+            Product::FerrGrowth => "ferrgrowth",
+            Product::FerrFleet => "ferrfleet",
+        }
+    }
+
+    pub fn all() -> &'static [Product] {
+        &[
+            Product::FerrFlow,
+            Product::FerrVault,
+            Product::FerrTrack,
+            Product::FerrGrowth,
+            Product::FerrFleet,
+        ]
+    }
+
+    pub fn paid() -> &'static [Product] {
+        &[
+            Product::FerrVault,
+            Product::FerrTrack,
+            Product::FerrGrowth,
+            Product::FerrFleet,
+        ]
+    }
+
+    pub fn is_paid(&self) -> bool {
+        !matches!(self, Product::FerrFlow)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SubscriptionStatus {
+    Trialing,
+    Active,
+    PastDue,
+    Canceled,
+    Incomplete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Subscription {
+    pub id: Uuid,
+    pub org_id: Uuid,
+    pub product: Product,
+    pub tier: Plan,
+    pub status: SubscriptionStatus,
+    pub trial_ends_at: Option<DateTime<Utc>>,
+    pub current_period_end: Option<DateTime<Utc>>,
+    pub stripe_subscription_id: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
