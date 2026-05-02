@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.1] - 2026-05-02
+
 ## [0.3.0] - 2026-04-23
 
 ### Features
