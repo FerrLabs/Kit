@@ -4,6 +4,14 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-05-05
+
+### Features
+
+- feat(telemetry): add events module + dispatch consumer APIs on release (#39)
+- feat(types): add full Product enum + rename Plan::Business to Pro + Subscription type (#36)
+- feat(auth): JWT (ed25519) + session store with rotation-based theft detection (#29)
+
 ## [0.2.0] - 2026-04-23
 
 ### Features

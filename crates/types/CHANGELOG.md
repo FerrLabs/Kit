@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-types` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-05-05
+
+### Features
+
+- feat(telemetry): add events module + dispatch consumer APIs on release (#39)
+
 ## [0.3.0] - 2026-05-02
 
 ### Features
