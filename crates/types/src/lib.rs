@@ -71,6 +71,7 @@ pub enum Product {
 }
 
 impl Product {
+    #[must_use]
     pub fn slug(&self) -> &'static str {
         match self {
             Product::FerrFlow => "ferrflow",
@@ -81,6 +82,7 @@ impl Product {
         }
     }
 
+    #[must_use]
     pub fn all() -> &'static [Product] {
         &[
             Product::FerrFlow,
@@ -91,6 +93,7 @@ impl Product {
         ]
     }
 
+    #[must_use]
     pub fn paid() -> &'static [Product] {
         &[
             Product::FerrVault,
@@ -100,6 +103,7 @@ impl Product {
         ]
     }
 
+    #[must_use]
     pub fn is_paid(&self) -> bool {
         !matches!(self, Product::FerrFlow)
     }

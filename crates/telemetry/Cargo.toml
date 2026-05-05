@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "Tracing, metrics, and structured logging setup for FerrLabs APIs."
+description = "Tracing/OTLP setup + product analytics event registry for FerrLabs services and CLIs."
 
 [dependencies]
 tracing = { workspace = true }
@@ -16,6 +16,17 @@ opentelemetry_sdk = "0.31"
 opentelemetry-otlp = { version = "0.31", features = ["grpc-tonic"] }
 tracing-opentelemetry = "0.32"
 anyhow = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+blake3 = "1.5"
+hex = { workspace = true }
+ferrlabs-types = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
 
 [lints]
 workspace = true
