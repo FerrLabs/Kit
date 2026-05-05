@@ -8,43 +8,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  check:
-    name: Lint + check
-    runs-on: ferrlabs-k8s
-    steps:
-      - name: Install build tools
-        run: |
-          if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=; fi
-          $SUDO apt-get update
-          $SUDO apt-get install -y --no-install-recommends build-essential pkg-config libssl-dev
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-targets: true
-      - name: Format check
-        run: cargo fmt --all --check
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: cargo check
-        run: cargo check --workspace --all-targets
-
-  test:
-    name: Test
-    runs-on: ferrlabs-k8s
-    needs: check
-    steps:
-      - name: Install build tools
-        run: |
-          if command -v sudo >/dev/null 2>&1; then SUDO=sudo; else SUDO=; fi
-          $SUDO apt-get update
-          $SUDO apt-get install -y --no-install-recommends build-essential pkg-config libssl-dev
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-targets: true
-      - name: Run tests
-        run: cargo test --workspace --all-features
+  ci:
+    name: CI
+    uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@main
+    with:
+      runner: ferrlabs-k8s
+      apt-packages: build-essential pkg-config libssl-dev
+      cargo-flags: --workspace --all-features
+      clippy-args: -D warnings
+      enable-deny: false
+      enable-typos: false
+      enable-coverage: false
+    secrets: inherit
