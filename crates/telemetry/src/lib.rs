@@ -8,6 +8,13 @@
 //! Application's Prometheus counters — needs registry injection before
 //! it compiles standalone. Tracked in
 //! [Kit#4](https://github.com/FerrLabs/Kit/issues/4).
+//!
+//! The [`events`] module is a separate, transport-agnostic registry of
+//! product-analytics events (org/auth/cli/per-product). It does not depend
+//! on tracing or OTLP and is intended to be consumed by every FerrLabs
+//! product, including CLIs.
+
+pub mod events;
 
 pub struct TelemetryGuard;
 
