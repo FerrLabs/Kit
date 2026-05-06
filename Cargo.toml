@@ -7,6 +7,7 @@ members = [
     "crates/db",
     "crates/errors",
     "crates/middleware",
+    "crates/permissions",
     "crates/telemetry",
     "crates/types",
 ]
@@ -64,6 +65,7 @@ ferrlabs-crypto = { path = "crates/crypto" }
 ferrlabs-auth = { path = "crates/auth" }
 ferrlabs-billing = { path = "crates/billing" }
 ferrlabs-middleware = { path = "crates/middleware" }
+ferrlabs-permissions = { path = "crates/permissions" }
 ferrlabs-telemetry = { path = "crates/telemetry" }
 
 [workspace.lints.rust]
