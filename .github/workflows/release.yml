@@ -19,7 +19,7 @@ jobs:
     name: Release with FerrFlow
     # Skip release commits to avoid self-triggering loops.
     if: github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(release):')
-    runs-on: ubuntu-latest
+    runs-on: ferrlabs-k8s
     concurrency:
       group: release-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -37,7 +37,7 @@ jobs:
     name: Trigger Renovate scan on consumers
     needs: release
     if: github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'chore(release):')
-    runs-on: ubuntu-latest
+    runs-on: ferrlabs-k8s
     steps:
       - name: Dispatch Renovate workflow
         env:
@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "RENOVATE_TOKEN / FERRLABS_DISPATCH_TOKEN not set — skipping ad-hoc Renovate trigger."
+            echo "RENOVATE_TOKEN / FERRLABS_DISPATCH_TOKEN not set â€” skipping ad-hoc Renovate trigger."
             exit 0
           fi
           gh workflow run renovate.yml -R FerrLabs/.github
