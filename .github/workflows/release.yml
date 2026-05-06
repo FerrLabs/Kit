@@ -32,3 +32,20 @@ jobs:
         with:
           dry-run: ${{ inputs.dry_run == true }}
           bot: true
+
+  trigger-renovate:
+    name: Trigger Renovate scan on consumers
+    needs: release
+    if: github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Renovate workflow
+        env:
+          GH_TOKEN: ${{ secrets.RENOVATE_TOKEN || secrets.FERRLABS_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "RENOVATE_TOKEN / FERRLABS_DISPATCH_TOKEN not set — skipping ad-hoc Renovate trigger."
+            exit 0
+          fi
+          gh workflow run renovate.yml -R FerrLabs/.github
