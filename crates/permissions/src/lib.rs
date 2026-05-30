@@ -37,8 +37,9 @@
 
 #![forbid(unsafe_code)]
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use std::collections::HashSet;
+use std::marker::PhantomData;
 
 /// Closed set of scopes recognised across the FerrLabs platform.
 ///
@@ -54,8 +55,7 @@ use std::collections::HashSet;
 /// **Adding a new variant**: if a product needs a new scope, add it
 /// here and bump the `ferrlabs-permissions` minor. Don't fork or
 /// extend with a sidecar enum — the closed enum is the point.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Scope {
     // -----------------------------------------------------------------
     // Cross-product platform scopes
@@ -238,6 +238,94 @@ impl Scope {
         )
     }
 }
+
+impl Serialize for Scope {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for Scope {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = <&str>::deserialize(deserializer)?;
+        Self::parse(s).ok_or_else(|| de::Error::unknown_variant(s, &["<see Scope::as_str>"]))
+    }
+}
+
+/// Resource-scoped authorization primitives.
+///
+/// API handlers across the FerrLabs platform repeatedly hand-write
+/// `WHERE id = $1 AND project_id = $2` to enforce tenant isolation —
+/// load a row, check its parent matches the caller's parent, return 404
+/// if not. The [`Resource`] trait centralises that contract so a future
+/// DB-backed extractor can do it once and hand back a [`ScopedResource`]
+/// that's already proven to belong to the caller's parent scope.
+///
+/// v0.1 ships the trait and the wrapper type only. The extractor lands
+/// in a follow-up alongside the FerrLabs-Cloud wire-up
+/// (`FerrLabs/FerrLabs-Cloud#362`).
+///
+/// # Defining a resource
+///
+/// ```text
+/// struct Vault;
+/// impl Resource for Vault {
+///     type Id = Uuid;
+///     type ParentId = Uuid;
+///     const TABLE: &'static str = "vaults";
+///     const PARENT_ID_COL: &'static str = "org_id";
+/// }
+/// ```
+pub trait Resource {
+    type Id: Copy + Send + Sync + 'static;
+    type ParentId: Copy + Send + Sync + 'static;
+
+    const TABLE: &'static str;
+    const ID_COL: &'static str = "id";
+    const PARENT_ID_COL: &'static str;
+}
+
+/// A reference to a [`Resource`] bound to its verified parent.
+///
+/// Built by the future DB-backed extractor; until that ships, consumers
+/// construct one via [`ScopedResource::new`] after running their own
+/// parent check. The wrapper exists so handler signatures can already
+/// adopt the final API and migrate to the extractor without churn.
+#[derive(Debug)]
+pub struct ScopedResource<R: Resource> {
+    pub parent_id: R::ParentId,
+    pub id: R::Id,
+    _phantom: PhantomData<fn() -> R>,
+}
+
+impl<R: Resource> ScopedResource<R> {
+    #[must_use]
+    pub fn new(parent_id: R::ParentId, id: R::Id) -> Self {
+        Self {
+            parent_id,
+            id,
+            _phantom: PhantomData,
+        }
+    }
+
+    #[must_use]
+    pub fn id(&self) -> R::Id {
+        self.id
+    }
+
+    #[must_use]
+    pub fn parent_id(&self) -> R::ParentId {
+        self.parent_id
+    }
+}
+
+impl<R: Resource> Clone for ScopedResource<R> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<R: Resource> Copy for ScopedResource<R> {}
 
 /// A set of scopes attached to a session or API token. O(1) lookup
 /// with implication-aware `has`.
@@ -477,10 +565,73 @@ mod tests {
     }
 
     #[test]
-    fn serde_round_trip_via_snake_case() {
-        let json = serde_json::to_string(&Scope::SecretsAdmin).unwrap();
-        assert_eq!(json, r#""secrets_admin""#);
-        let parsed: Scope = serde_json::from_str(&json).unwrap();
-        assert_eq!(parsed, Scope::SecretsAdmin);
+    fn serde_uses_colon_wire_form_for_known_variants() {
+        assert_eq!(
+            serde_json::to_string(&Scope::SecretsRead).unwrap(),
+            r#""secrets:read""#
+        );
+        assert_eq!(
+            serde_json::to_string(&Scope::SecretsAdmin).unwrap(),
+            r#""secrets:admin""#
+        );
+        assert_eq!(
+            serde_json::to_string(&Scope::AgentsRun).unwrap(),
+            r#""agents:run""#
+        );
+        assert_eq!(
+            serde_json::to_string(&Scope::StaffAccess).unwrap(),
+            r#""staff:access""#
+        );
+        assert_eq!(
+            serde_json::to_string(&Scope::TokensManage).unwrap(),
+            r#""tokens:manage""#
+        );
+    }
+
+    #[test]
+    fn serde_round_trip_matches_as_str_for_every_variant() {
+        for scope in Scope::all() {
+            let json = serde_json::to_string(scope).unwrap();
+            assert_eq!(
+                json,
+                format!("\"{}\"", scope.as_str()),
+                "serde diverged from as_str for {scope:?}",
+            );
+            let parsed: Scope = serde_json::from_str(&json).unwrap();
+            assert_eq!(parsed, *scope, "round-trip lost {scope:?}");
+        }
+    }
+
+    #[test]
+    fn serde_rejects_legacy_snake_case_wire_form() {
+        assert!(serde_json::from_str::<Scope>(r#""secrets_read""#).is_err());
+        assert!(serde_json::from_str::<Scope>(r#""secrets_admin""#).is_err());
+        assert!(serde_json::from_str::<Scope>(r#""agents_run""#).is_err());
+        assert!(serde_json::from_str::<Scope>(r#""tokens_manage""#).is_err());
+    }
+
+    #[test]
+    fn serde_rejects_unknown_scope_string() {
+        assert!(serde_json::from_str::<Scope>(r#""not:a:scope""#).is_err());
+    }
+
+    struct FakeVault;
+    impl Resource for FakeVault {
+        type Id = u64;
+        type ParentId = u64;
+        const TABLE: &'static str = "vaults";
+        const PARENT_ID_COL: &'static str = "org_id";
+    }
+
+    #[test]
+    fn scoped_resource_round_trips_ids() {
+        let r: ScopedResource<FakeVault> = ScopedResource::new(42, 7);
+        assert_eq!(r.parent_id(), 42);
+        assert_eq!(r.id(), 7);
+        assert_eq!(FakeVault::TABLE, "vaults");
+        assert_eq!(FakeVault::ID_COL, "id");
+        assert_eq!(FakeVault::PARENT_ID_COL, "org_id");
+        let copied = r;
+        assert_eq!(copied.id(), 7);
     }
 }
