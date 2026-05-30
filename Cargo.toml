@@ -6,11 +6,14 @@ members = [
     "crates/crypto",
     "crates/db",
     "crates/errors",
+    "crates/http",
     "crates/middleware",
     "crates/permissions",
     "crates/queue",
     "crates/telemetry",
+    "crates/testkit",
     "crates/types",
+    "crates/vault",
 ]
 
 [workspace.package]
@@ -33,6 +36,12 @@ axum = "0.8"
 tower = "0.5"
 tower-http = "0.6"
 http = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+url = "2"
+
+# Test infra
+testcontainers = "0.27"
+testcontainers-modules = { version = "0.15", features = ["postgres"] }
 
 # Async
 tokio = { version = "1", features = ["full"] }
@@ -69,6 +78,9 @@ ferrlabs-middleware = { path = "crates/middleware" }
 ferrlabs-permissions = { path = "crates/permissions" }
 ferrlabs-queue = { path = "crates/queue" }
 ferrlabs-telemetry = { path = "crates/telemetry" }
+ferrlabs-vault = { path = "crates/vault" }
+ferrlabs-http = { path = "crates/http" }
+ferrlabs-testkit = { path = "crates/testkit" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
