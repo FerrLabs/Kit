@@ -4,6 +4,17 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-05-30
+
+### Features
+
+- feat(permissions): scaffold ferrlabs-permissions crate (closes #30) (#53)
+- feat(ci): trigger ad-hoc Renovate scan after release (#51)
+
+### Bug Fixes
+
+- fix(deps): update rust crate tracing-opentelemetry to 0.33 (#63)
+
 ## [0.3.0] - 2026-05-05
 
 ### Features
