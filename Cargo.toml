@@ -1,19 +1,23 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/audit",
     "crates/auth",
     "crates/billing",
     "crates/crypto",
     "crates/db",
     "crates/errors",
     "crates/http",
+    "crates/id",
     "crates/middleware",
     "crates/permissions",
     "crates/queue",
+    "crates/ratelimit",
     "crates/telemetry",
     "crates/testkit",
     "crates/types",
     "crates/vault",
+    "crates/webhooks",
 ]
 
 [workspace.package]
@@ -65,7 +69,11 @@ opentelemetry = "0.31"
 
 # Validation
 validator = "0.20"
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+
+# Concurrency / timing-safe compare
+dashmap = "6"
+subtle = "2"
 
 # Internal crates
 ferrlabs-errors = { path = "crates/errors" }
@@ -81,6 +89,10 @@ ferrlabs-telemetry = { path = "crates/telemetry" }
 ferrlabs-vault = { path = "crates/vault" }
 ferrlabs-http = { path = "crates/http" }
 ferrlabs-testkit = { path = "crates/testkit" }
+ferrlabs-id = { path = "crates/id" }
+ferrlabs-ratelimit = { path = "crates/ratelimit" }
+ferrlabs-webhooks = { path = "crates/webhooks" }
+ferrlabs-audit = { path = "crates/audit" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
