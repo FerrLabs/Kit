@@ -65,7 +65,7 @@ base64 = "0.22"
 # Observability
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-opentelemetry = "0.31"
+opentelemetry = "0.32"
 
 # Validation
 validator = "0.20"
