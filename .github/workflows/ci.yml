@@ -12,6 +12,7 @@ jobs:
     name: CI
     uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@main
     with:
+      enable-sonar: true
       runner: ferrlabs-k8s
       apt-packages: build-essential pkg-config libssl-dev
       cargo-flags: --workspace --all-features
