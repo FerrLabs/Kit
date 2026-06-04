@@ -19,5 +19,5 @@ jobs:
       clippy-args: -D warnings
       enable-deny: false
       enable-typos: false
-      enable-coverage: false
+      enable-coverage: true
     secrets: inherit
