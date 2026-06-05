@@ -4,6 +4,24 @@ All notable changes to `ferrlabs-crypto` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-06-05
+
+### Features
+
+- feat: scaffold ratelimit, webhooks, id, and audit crates (#82)
+- feat: scaffold ferrlabs-vault, ferrlabs-http and ferrlabs-testkit crates (#79)
+- feat(queue): add ferrlabs-queue crate — Postgres-backed durable job queue (#76)
+- feat(permissions): scaffold ferrlabs-permissions crate (closes #30) (#53)
+- feat(ci): trigger ad-hoc Renovate scan after release (#51)
+- feat(telemetry): add events module + dispatch consumer APIs on release (#39)
+- feat(types): add full Product enum + rename Plan::Business to Pro + Subscription type (#36)
+- feat(auth): JWT (ed25519) + session store with rotation-based theft detection (#29)
+
+### Bug Fixes
+
+- fix(permissions): align Scope serde with as_str + add Resource trait; sync README (#77)
+- fix(deps): update rust crate tracing-opentelemetry to 0.33 (#63)
+
 ## [0.2.0] - 2026-04-23
 
 ### Features
