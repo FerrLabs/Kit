@@ -340,4 +340,77 @@ mod tests {
         let pt = decrypt_value(&ct, &dek).unwrap();
         assert_eq!(pt, message);
     }
+
+    #[test]
+    fn generate_dek_is_32_bytes_and_unique() {
+        let a = generate_dek();
+        let b = generate_dek();
+        assert_eq!(a.len(), 32);
+        assert_eq!(b.len(), 32);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn encrypt_uses_a_fresh_nonce_each_call() {
+        let dek = generate_dek();
+        let msg = b"same plaintext";
+        let a = encrypt_value(msg, &dek).unwrap();
+        let b = encrypt_value(msg, &dek).unwrap();
+        assert_ne!(a, b, "identical ciphertext means nonce reuse");
+        assert_ne!(&a[..NONCE_SIZE], &b[..NONCE_SIZE], "nonce must differ");
+    }
+
+    #[test]
+    fn encrypt_decrypt_empty_plaintext() {
+        let dek = generate_dek();
+        let ct = encrypt_value(b"", &dek).unwrap();
+        assert_eq!(decrypt_value(&ct, &dek).unwrap(), b"");
+    }
+
+    #[test]
+    fn decrypt_rejects_ciphertext_shorter_than_nonce() {
+        let dek = generate_dek();
+        let err = decrypt_value(&[0u8; NONCE_SIZE - 1], &dek).unwrap_err();
+        assert!(err.to_string().contains("too short"));
+    }
+
+    #[test]
+    fn decrypt_fails_with_wrong_dek() {
+        let ct = encrypt_value(b"secret", &generate_dek()).unwrap();
+        assert!(decrypt_value(&ct, &generate_dek()).is_err());
+    }
+
+    #[test]
+    fn decrypt_fails_on_tampered_ciphertext() {
+        let dek = generate_dek();
+        let mut ct = encrypt_value(b"secret", &dek).unwrap();
+        let last = ct.len() - 1;
+        ct[last] ^= 0xff;
+        assert!(decrypt_value(&ct, &dek).is_err());
+    }
+
+    #[test]
+    fn decrypt_fails_on_tampered_nonce() {
+        let dek = generate_dek();
+        let mut ct = encrypt_value(b"secret", &dek).unwrap();
+        ct[0] ^= 0xff;
+        assert!(decrypt_value(&ct, &dek).is_err());
+    }
+
+    #[test]
+    fn parse_kek_accepts_64_hex_chars() {
+        let hex = "00".repeat(32);
+        assert_eq!(parse_kek(&hex).unwrap().len(), 32);
+    }
+
+    #[test]
+    fn parse_kek_rejects_wrong_length() {
+        let err = parse_kek(&"00".repeat(16)).unwrap_err();
+        assert!(err.to_string().contains("32 bytes"));
+    }
+
+    #[test]
+    fn parse_kek_rejects_non_hex() {
+        assert!(parse_kek("zz".repeat(32).as_str()).is_err());
+    }
 }

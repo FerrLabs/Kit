@@ -148,4 +148,35 @@ mod tests {
         assert_eq!(parse_secret_value(&json!({ "data": { "data": {} } })), None);
         assert_eq!(parse_secret_value(&json!({})), None);
     }
+
+    #[test]
+    fn url_building_is_idempotent_on_slashes() {
+        let c = client();
+        assert_eq!(
+            c.data_url("no-leading-slash"),
+            "https://vault.example.com/v1/secret/data/no-leading-slash"
+        );
+        assert_eq!(
+            c.data_url("//double//slash//"),
+            "https://vault.example.com/v1/secret/data/double//slash"
+        );
+    }
+
+    #[test]
+    fn new_trims_trailing_addr_slash_and_mount_slashes() {
+        let c = VaultClient::new("https://v.example.com///", "tok", "//kv//");
+        assert_eq!(c.data_url("p"), "https://v.example.com/v1/kv/data/p");
+    }
+
+    #[test]
+    fn parse_returns_none_when_value_not_a_string() {
+        let body = json!({ "data": { "data": { "value": 42 } } });
+        assert_eq!(parse_secret_value(&body), None);
+    }
+
+    #[test]
+    fn parse_reads_only_the_value_field() {
+        let body = json!({ "data": { "data": { "other": "x" } } });
+        assert_eq!(parse_secret_value(&body), None);
+    }
 }

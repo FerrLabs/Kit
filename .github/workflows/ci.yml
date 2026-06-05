@@ -16,6 +16,7 @@ jobs:
       runner: ferrlabs-k8s
       apt-packages: build-essential pkg-config libssl-dev
       cargo-flags: --workspace --all-features
+      coverage-flags: --all-features
       clippy-args: -D warnings
       enable-deny: false
       enable-typos: false
