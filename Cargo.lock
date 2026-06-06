@@ -1091,7 +1091,7 @@ dependencies = [
  "chrono",
  "ferrlabs-types",
  "hex",
- "opentelemetry 0.31.0",
+ "opentelemetry 0.32.0",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "serde",
@@ -2205,6 +2205,7 @@ dependencies = [
  "js-sys",
  "pin-project-lite",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
