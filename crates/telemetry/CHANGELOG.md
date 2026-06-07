@@ -4,6 +4,20 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-06-07
+
+### Features
+
+- feat(testkit): use TEST_DATABASE_URL when set (no-Docker integration tests) (#91)
+- feat: scaffold ratelimit, webhooks, id, and audit crates (#82)
+- feat: scaffold ferrlabs-vault, ferrlabs-http and ferrlabs-testkit crates (#79)
+- feat(queue): add ferrlabs-queue crate — Postgres-backed durable job queue (#76)
+
+### Bug Fixes
+
+- fix(deps): update rust crate opentelemetry_sdk to 0.32 (#85)
+- fix(permissions): align Scope serde with as_str + add Resource trait; sync README (#77)
+
 ## [0.4.0] - 2026-05-30
 
 ### Features
