@@ -932,6 +932,7 @@ dependencies = [
  "axum",
  "base64",
  "chrono",
+ "ed25519-dalek",
  "ferrlabs-crypto",
  "ferrlabs-db",
  "ferrlabs-errors",
@@ -1084,7 +1085,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-telemetry"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "blake3",
