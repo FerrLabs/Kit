@@ -147,47 +147,7 @@ async fn run_loop<P, W>(
 
     loop {
         if let Some(claimed) = claim_one(&pool, queue, &worker_id).await {
-            let id = claimed.id;
-            let attempts = claimed.attempts;
-            let max_attempts = claimed.max_attempts;
-            match serde_json::from_value::<P>(claimed.payload) {
-                Ok(payload) => {
-                    let job = Job {
-                        id: JobId(id),
-                        payload,
-                        attempt: u32::try_from(attempts).unwrap_or(0),
-                        max_attempts: u32::try_from(max_attempts).unwrap_or(0),
-                        queue: queue.to_owned(),
-                        org_id: claimed.org_id,
-                        actor_id: claimed.actor_id,
-                        run_at: claimed.run_at,
-                        created_at: claimed.created_at,
-                    };
-                    let attempt = job.attempt;
-                    match worker.handle(job).await {
-                        Ok(()) => mark_done(&pool, id).await,
-                        Err(WorkerError::Permanent(err)) => {
-                            mark_dead(&pool, id, &err.to_string()).await;
-                        }
-                        Err(WorkerError::Retriable(err)) => {
-                            if attempts >= max_attempts {
-                                mark_dead(&pool, id, &err.to_string()).await;
-                            } else {
-                                let delay = backoff_seconds(attempt);
-                                let next_run = Utc::now()
-                                    + chrono::Duration::seconds(
-                                        i64::try_from(delay).unwrap_or(i64::MAX),
-                                    );
-                                mark_failed_for_retry(&pool, id, &err.to_string(), next_run).await;
-                            }
-                        }
-                    }
-                }
-                Err(err) => {
-                    error!(queue, %id, error = %err, "failed to deserialize payload; marking dead");
-                    mark_dead(&pool, id, &format!("payload deserialization failed: {err}")).await;
-                }
-            }
+            process_claimed::<P, W>(&pool, &worker, queue, claimed).await;
             continue;
         }
 
@@ -202,6 +162,63 @@ async fn run_loop<P, W>(
             () = tokio::time::sleep(poll_interval) => {}
         }
     }
+}
+
+async fn process_claimed<P, W>(pool: &PgPool, worker: &Arc<W>, queue: &str, claimed: Claimed)
+where
+    P: Payload,
+    W: Worker<P> + 'static,
+{
+    let id = claimed.id;
+    let attempts = claimed.attempts;
+    let max_attempts = claimed.max_attempts;
+
+    let payload = match serde_json::from_value::<P>(claimed.payload) {
+        Ok(payload) => payload,
+        Err(err) => {
+            error!(queue, %id, error = %err, "failed to deserialize payload; marking dead");
+            mark_dead(pool, id, &format!("payload deserialization failed: {err}")).await;
+            return;
+        }
+    };
+
+    let job = Job {
+        id: JobId(id),
+        payload,
+        attempt: u32::try_from(attempts).unwrap_or(0),
+        max_attempts: u32::try_from(max_attempts).unwrap_or(0),
+        queue: queue.to_owned(),
+        org_id: claimed.org_id,
+        actor_id: claimed.actor_id,
+        run_at: claimed.run_at,
+        created_at: claimed.created_at,
+    };
+    let attempt = job.attempt;
+
+    match worker.handle(job).await {
+        Ok(()) => mark_done(pool, id).await,
+        Err(WorkerError::Permanent(err)) => mark_dead(pool, id, &err.to_string()).await,
+        Err(WorkerError::Retriable(err)) => {
+            retry_or_bury(pool, id, attempt, attempts, max_attempts, &err.to_string()).await;
+        }
+    }
+}
+
+async fn retry_or_bury(
+    pool: &PgPool,
+    id: Uuid,
+    attempt: u32,
+    attempts: i32,
+    max_attempts: i32,
+    err_msg: &str,
+) {
+    if attempts >= max_attempts {
+        mark_dead(pool, id, err_msg).await;
+        return;
+    }
+    let delay = backoff_seconds(attempt);
+    let next_run = Utc::now() + chrono::Duration::seconds(i64::try_from(delay).unwrap_or(i64::MAX));
+    mark_failed_for_retry(pool, id, err_msg, next_run).await;
 }
 
 #[derive(sqlx::FromRow)]
@@ -342,35 +359,45 @@ async fn sweeper_loop(
 async fn listener_loop(pool: PgPool, queue: String, wake: Arc<Notify>, shutdown: Arc<Notify>) {
     let channel = notify_channel(&queue);
     loop {
-        match PgListener::connect_with(&pool).await {
-            Ok(mut listener) => {
-                if let Err(err) = listener.listen(&channel).await {
-                    warn!(channel, error = %err, "LISTEN failed; backing off");
-                    if wait_or_shutdown(&shutdown, Duration::from_secs(5)).await {
-                        return;
-                    }
-                    continue;
-                }
-                let mut stream = listener.into_stream();
-                loop {
-                    tokio::select! {
-                        () = shutdown.notified() => return,
-                        next = stream.next() => match next {
-                            Some(Ok(_)) => wake.notify_waiters(),
-                            Some(Err(err)) => {
-                                warn!(channel, error = %err, "listener stream error; reconnecting");
-                                break;
-                            }
-                            None => break,
-                        }
-                    }
+        match open_listener(&pool, &channel).await {
+            Ok(listener) => {
+                if consume_notifications(listener, &channel, &wake, &shutdown).await {
+                    return;
                 }
             }
             Err(err) => {
-                warn!(channel, error = %err, "could not open LISTEN connection; backing off");
+                warn!(channel, error = %err, "LISTEN connection failed; backing off");
                 if wait_or_shutdown(&shutdown, Duration::from_secs(5)).await {
                     return;
                 }
+            }
+        }
+    }
+}
+
+async fn open_listener(pool: &PgPool, channel: &str) -> Result<PgListener, sqlx::Error> {
+    let mut listener = PgListener::connect_with(pool).await?;
+    listener.listen(channel).await?;
+    Ok(listener)
+}
+
+async fn consume_notifications(
+    listener: PgListener,
+    channel: &str,
+    wake: &Notify,
+    shutdown: &Notify,
+) -> bool {
+    let mut stream = listener.into_stream();
+    loop {
+        tokio::select! {
+            () = shutdown.notified() => return true,
+            next = stream.next() => match next {
+                Some(Ok(_)) => wake.notify_waiters(),
+                Some(Err(err)) => {
+                    warn!(channel, error = %err, "listener stream error; reconnecting");
+                    return false;
+                }
+                None => return false,
             }
         }
     }
