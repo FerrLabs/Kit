@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run (do not push tags or releases)'
+        description: 'Dry run (no tag, no release)'
         type: boolean
         default: false
 
@@ -14,38 +14,14 @@ permissions:
   contents: write
   id-token: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
-    name: Release with FerrFlow
-    # Skip release commits to avoid self-triggering loops.
-    if: github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(release):')
-    runs-on: ferrlabs-k8s
-    concurrency:
-      group: release-${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: FerrLabs/FerrFlow@v5
-        id: ferrflow
-        with:
-          dry-run: ${{ inputs.dry_run == true }}
-          bot: true
-
-  trigger-renovate:
-    name: Trigger Renovate scan on consumers
-    needs: release
-    if: github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'chore(release):')
-    runs-on: ferrlabs-k8s
-    steps:
-      - name: Dispatch Renovate workflow
-        env:
-          GH_TOKEN: ${{ secrets.RENOVATE_TOKEN || secrets.FERRLABS_DISPATCH_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${GH_TOKEN:-}" ]; then
-            echo "RENOVATE_TOKEN / FERRLABS_DISPATCH_TOKEN not set â€” skipping ad-hoc Renovate trigger."
-            exit 0
-          fi
-          gh workflow run renovate.yml -R FerrLabs/.github
+    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@main
+    with:
+      dry-run: ${{ inputs.dry_run || false }}
+      trigger-renovate: true
+    secrets: inherit
