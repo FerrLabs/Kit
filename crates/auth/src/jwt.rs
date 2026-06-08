@@ -151,27 +151,35 @@ pub fn verify_token(config: &JwtConfig, token: &str) -> Result<Claims, JwtError>
 
 #[cfg(test)]
 mod tests {
+    use ed25519_dalek::SigningKey;
+    use ed25519_dalek::pkcs8::EncodePrivateKey;
+    use ed25519_dalek::pkcs8::spki::EncodePublicKey;
+    use ed25519_dalek::pkcs8::spki::der::pem::LineEnding;
+
     use super::*;
 
-    /// Ed25519 test keypair — generated once and hard-coded so tests don't
-    /// depend on a CSPRNG at compile time. **Never** reuse these outside tests.
-    ///
-    /// Generated with:
-    /// ```text
-    /// openssl genpkey -algorithm ed25519 -out priv.pem
-    /// openssl pkey -in priv.pem -pubout -out pub.pem
-    /// ```
-    const TEST_PRIVATE_PEM: &[u8] = b"-----BEGIN PRIVATE KEY-----\n\
-MC4CAQAwBQYDK2VwBCIEIFPsFIG7m7HPSKR4iUQ5yt527q3dEUnjM+67hM+cPQmb\n\
------END PRIVATE KEY-----\n";
+    fn generate_keypair() -> (String, String) {
+        let seed: [u8; 32] = rand::random();
+        let signing = SigningKey::from_bytes(&seed);
+        let private_pem = signing
+            .to_pkcs8_pem(LineEnding::LF)
+            .expect("encode pkcs8 private key")
+            .to_string();
+        let public_pem = signing
+            .verifying_key()
+            .to_public_key_pem(LineEnding::LF)
+            .expect("encode spki public key");
+        (private_pem, public_pem)
+    }
 
-    const TEST_PUBLIC_PEM: &[u8] = b"-----BEGIN PUBLIC KEY-----\n\
-MCowBQYDK2VwAyEAO1omu6L4Mq9i4RmjolYvPFA7So9ePE3/CVkTAGJvmjM=\n\
------END PUBLIC KEY-----\n";
+    fn config_with(issuer: &str, ttl: Duration, keypair: &(String, String)) -> JwtConfig {
+        let (private_pem, public_pem) = keypair;
+        JwtConfig::from_ed25519_pems(private_pem.as_bytes(), public_pem.as_bytes(), issuer, ttl)
+            .expect("generated test keys should parse")
+    }
 
     fn test_config(ttl: Duration) -> JwtConfig {
-        JwtConfig::from_ed25519_pems(TEST_PRIVATE_PEM, TEST_PUBLIC_PEM, "ferrlabs-test", ttl)
-            .expect("test keys should parse")
+        config_with("ferrlabs-test", ttl, &generate_keypair())
     }
 
     #[test]
@@ -236,14 +244,9 @@ MCowBQYDK2VwAyEAO1omu6L4Mq9i4RmjolYvPFA7So9ePE3/CVkTAGJvmjM=\n\
 
     #[test]
     fn wrong_issuer_rejected() {
-        let signer = JwtConfig::from_ed25519_pems(
-            TEST_PRIVATE_PEM,
-            TEST_PUBLIC_PEM,
-            "other-issuer",
-            DEFAULT_ACCESS_TTL,
-        )
-        .unwrap();
-        let verifier = test_config(DEFAULT_ACCESS_TTL);
+        let keypair = generate_keypair();
+        let signer = config_with("other-issuer", DEFAULT_ACCESS_TTL, &keypair);
+        let verifier = config_with("ferrlabs-test", DEFAULT_ACCESS_TTL, &keypair);
 
         let token = issue_token(&signer, Uuid::new_v4(), None).unwrap();
 
