@@ -4,6 +4,18 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-06-08
+
+### Features
+
+- feat: make workspace crates publishable to the Kellnr registry (#97)
+- feat(testkit): use TEST_DATABASE_URL when set (no-Docker integration tests) (#91)
+
+### Bug Fixes
+
+- fix(deps): update rust crate opentelemetry-otlp to 0.32 (#86)
+- fix(deps): update rust crate opentelemetry_sdk to 0.32 (#85)
+
 ## [0.3.3] - 2026-06-05
 
 ## [0.3.2] - 2026-05-05
