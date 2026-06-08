@@ -1,0 +1,12 @@
+# Private FerrLabs Cargo registry (Kellnr). The ferrlabs-* crates are published
+# here and resolved from here. Auth token is provided out-of-band:
+#   - CI: CARGO_REGISTRIES_KELLNR_TOKEN (org secret)
+#   - local dev: ~/.cargo/credentials.toml
+[registries.kellnr]
+index = "sparse+https://crates.ferrlabs.com/api/v1/crates/"
+
+# cargo >=1.74 requires an explicit credential provider for auth-required
+# registries; cargo:token reads the token from CARGO_REGISTRIES_KELLNR_TOKEN
+# (CI) or ~/.cargo/credentials.toml (local).
+[registry]
+global-credential-providers = ["cargo:token"]
