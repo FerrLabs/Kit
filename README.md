@@ -1,5 +1,8 @@
 # Kit
 
+[![Quality Gate](https://sonar.ferrlabs.com/api/project_badges/measure?project=Kit&metric=alert_status&token=sqb_2dd78d2cae70099a99721c5cdbf22eaa02f5ee4c)](https://sonar.ferrlabs.com/dashboard?id=Kit)
+[![Coverage](https://sonar.ferrlabs.com/api/project_badges/measure?project=Kit&metric=coverage&token=sqb_2dd78d2cae70099a99721c5cdbf22eaa02f5ee4c)](https://sonar.ferrlabs.com/dashboard?id=Kit)
+
 Shared Rust crate workspace for [FerrLabs](https://github.com/FerrLabs) product backends.
 
 Consumed by:
