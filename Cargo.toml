@@ -9,6 +9,7 @@ members = [
     "crates/errors",
     "crates/http",
     "crates/id",
+    "crates/license",
     "crates/middleware",
     "crates/permissions",
     "crates/queue",
@@ -90,6 +91,7 @@ ferrlabs-vault = { path = "crates/vault", version = "0.1.0", registry = "kellnr"
 ferrlabs-http = { path = "crates/http", version = "0.1.0", registry = "kellnr" }
 ferrlabs-testkit = { path = "crates/testkit", version = "0.1.0", registry = "kellnr" }
 ferrlabs-id = { path = "crates/id", version = "0.1.0", registry = "kellnr" }
+ferrlabs-license = { path = "crates/license", version = "0.1.0", registry = "kellnr" }
 ferrlabs-ratelimit = { path = "crates/ratelimit", version = "0.1.0", registry = "kellnr" }
 ferrlabs-webhooks = { path = "crates/webhooks", version = "0.1.0", registry = "kellnr" }
 ferrlabs-audit = { path = "crates/audit", version = "0.1.0", registry = "kellnr" }
