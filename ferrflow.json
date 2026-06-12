@@ -76,6 +76,14 @@
       "versionedFiles": [
         { "path": "crates/telemetry/Cargo.toml", "format": "toml" }
       ]
+    },
+    {
+      "name": "ferrlabs-license",
+      "path": "crates/license",
+      "changelog": "crates/license/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/license/Cargo.toml", "format": "toml" }
+      ]
     }
   ]
 }
