@@ -1035,6 +1035,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferrlabs-license"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ed25519-dalek",
+ "jsonwebtoken",
+ "rand 0.10.1",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "ferrlabs-middleware"
 version = "0.2.5"
 dependencies = [
