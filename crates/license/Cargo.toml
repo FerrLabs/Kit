@@ -8,15 +8,24 @@ authors.workspace = true
 rust-version.workspace = true
 description = "Offline ed25519-signed license keys for FerrLabs self-host editions: mint, verify, gate."
 
+[features]
+default = []
+cli = ["dep:clap"]
+
 [dependencies]
 serde = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 jsonwebtoken = { version = "10", default-features = false, features = ["rust_crypto", "use_pem"] }
+clap = { version = "4", features = ["derive"], optional = true }
 
 [dev-dependencies]
 ed25519-dalek = { version = "2", features = ["pkcs8", "pem"] }
 rand = { workspace = true }
+
+[[bin]]
+name = "licensegen"
+required-features = ["cli"]
 
 [lints]
 workspace = true
