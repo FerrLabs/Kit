@@ -3,3 +3,39 @@
 All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
+
+## [0.2.0] - 2026-06-12
+
+### Features
+
+- feat(license): add ferrlabs-license crate for offline self-host license gating (#109)
+- feat: make workspace crates publishable to the Kellnr registry (#97)
+- feat(testkit): use TEST_DATABASE_URL when set (no-Docker integration tests) (#91)
+- feat: scaffold ratelimit, webhooks, id, and audit crates (#82)
+- feat: scaffold ferrlabs-vault, ferrlabs-http and ferrlabs-testkit crates (#79)
+- feat(queue): add ferrlabs-queue crate — Postgres-backed durable job queue (#76)
+- feat(permissions): scaffold ferrlabs-permissions crate (closes #30) (#53)
+- feat(ci): trigger ad-hoc Renovate scan after release (#51)
+- feat(telemetry): add events module + dispatch consumer APIs on release (#39)
+- feat(types): add full Product enum + rename Plan::Business to Pro + Subscription type (#36)
+- feat(auth): JWT (ed25519) + session store with rotation-based theft detection (#29)
+- feat(ci): add FerrFlow release workflow for Kit monorepo (#23)
+- feat: port errors, crypto, middleware, auth, telemetry modules from FerrFlow-Cloud api (#3)
+- feat: bootstrap Cargo workspace with 8 crates (#2)
+
+### Bug Fixes
+
+- fix(deps): update rust crate opentelemetry-otlp to 0.32 (#86)
+- fix(deps): update rust crate opentelemetry_sdk to 0.32 (#85)
+- fix(permissions): align Scope serde with as_str + add Resource trait; sync README (#77)
+- fix(deps): update rust crate tracing-opentelemetry to 0.33 (#63)
+- fix(deps): update rust crate tracing-opentelemetry to 0.32 (#22)
+- fix(deps): update rust crate jsonwebtoken to v10 [security] (#21)
+- fix(deps): update opentelemetry-rust monorepo to 0.31 (#18)
+- fix(errors): pass ApiError by reference in test helper (#13)
+- fix(auth): convert argon2 password_hash errors via map_err instead of context (#12)
+- fix(kit): unblock telemetry + crypto compilation, disable async-stripe temporarily (#11)
+- fix(errors): declare validator dep (#10)
+- fix(ci): cargo fmt --all (#9)
+- fix(ci): exclude unmigrated Application ports from compilation (#8)
+- fix: bump rust-version to 1.85 (required by edition 2024) (#7)
