@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-06-12
+
+### Features
+
+- feat(license): add licensegen minting tool behind the cli feature (#111)
+
 ## [0.2.0] - 2026-06-12
 
 ### Features
