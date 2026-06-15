@@ -4,6 +4,19 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-06-15
+
+### Features
+
+- feat(telemetry): implement init() with tracing-subscriber + OTLP export (#113)
+- feat(license): add licensegen minting tool behind the cli feature (#111)
+- feat(license): add ferrlabs-license crate for offline self-host license gating (#109)
+- feat: make workspace crates publishable to the Kellnr registry (#97)
+
+### Refactoring
+
+- refactor(queue): extract helpers to cut worker-loop cognitive complexity (#95)
+
 ## [0.5.1] - 2026-06-07
 
 ### Bug Fixes
