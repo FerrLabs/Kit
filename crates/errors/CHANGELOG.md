@@ -4,6 +4,42 @@ All notable changes to `ferrlabs-errors` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-06-15
+
+### Breaking Changes
+
+- feat!: upgrade to sqlx 0.9 across sqlx-exposing crates (#117)
+
+### Features
+
+- feat(middleware): land decoupled CORS layer (#114)
+- feat(telemetry): implement init() with tracing-subscriber + OTLP export (#113)
+- feat(license): add licensegen minting tool behind the cli feature (#111)
+- feat(license): add ferrlabs-license crate for offline self-host license gating (#109)
+- feat: make workspace crates publishable to the Kellnr registry (#97)
+- feat(testkit): use TEST_DATABASE_URL when set (no-Docker integration tests) (#91)
+- feat: scaffold ratelimit, webhooks, id, and audit crates (#82)
+- feat: scaffold ferrlabs-vault, ferrlabs-http and ferrlabs-testkit crates (#79)
+- feat(queue): add ferrlabs-queue crate — Postgres-backed durable job queue (#76)
+- feat(permissions): scaffold ferrlabs-permissions crate (closes #30) (#53)
+- feat(ci): trigger ad-hoc Renovate scan after release (#51)
+- feat(telemetry): add events module + dispatch consumer APIs on release (#39)
+- feat(types): add full Product enum + rename Plan::Business to Pro + Subscription type (#36)
+- feat(auth): JWT (ed25519) + session store with rotation-based theft detection (#29)
+
+### Bug Fixes
+
+- fix(deps): update rust crate reqwest to 0.13 (#62)
+- fix(auth): implement AuthUser FromRequestParts JWT extractor (#115)
+- fix(deps): update rust crate opentelemetry-otlp to 0.32 (#86)
+- fix(deps): update rust crate opentelemetry_sdk to 0.32 (#85)
+- fix(permissions): align Scope serde with as_str + add Resource trait; sync README (#77)
+- fix(deps): update rust crate tracing-opentelemetry to 0.33 (#63)
+
+### Refactoring
+
+- refactor(queue): extract helpers to cut worker-loop cognitive complexity (#95)
+
 ## [0.2.0] - 2026-04-23
 
 ### Features

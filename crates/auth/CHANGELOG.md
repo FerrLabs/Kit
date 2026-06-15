@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-06-15
+
+### Breaking Changes
+
+- feat!: upgrade to sqlx 0.9 across sqlx-exposing crates (#117)
+
 ## [0.5.0] - 2026-06-15
 
 ### Features
