@@ -52,7 +52,7 @@ testcontainers-modules = { version = "0.15", features = ["postgres"] }
 tokio = { version = "1", features = ["full"] }
 
 # DB
-sqlx = { version = "0.9", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
 
 # Crypto
 aes-gcm = "0.10"
