@@ -32,6 +32,7 @@ pub mod session;
 pub mod totp;
 
 pub use jwt::{Claims, JwtConfig, JwtError, issue_token, verify_token};
+pub use middleware::AuthUser;
 pub use password::{hash as hash_password, verify as verify_password};
 pub use session::{
     DEFAULT_REFRESH_TTL, IssuedSession, PgSessionStore, Session, SessionError, SessionStore,
