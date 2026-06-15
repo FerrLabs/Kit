@@ -12,15 +12,18 @@
       "path": "crates/errors",
       "changelog": "crates/errors/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/errors/Cargo.toml", "format": "toml" }
-      ]
+        { "path": "crates/errors/Cargo.toml", "format": "toml" },
+        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-errors = .*version = \"([^\"]+)\"" }
+      ],
+      "sharedPaths": ["Cargo.toml"]
     },
     {
       "name": "ferrlabs-types",
       "path": "crates/types",
       "changelog": "crates/types/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/types/Cargo.toml", "format": "toml" }
+        { "path": "crates/types/Cargo.toml", "format": "toml" },
+        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-types = .*version = \"([^\"]+)\"" }
       ],
       "dependsOn": ["ferrlabs-errors"]
     },
@@ -29,7 +32,8 @@
       "path": "crates/crypto",
       "changelog": "crates/crypto/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/crypto/Cargo.toml", "format": "toml" }
+        { "path": "crates/crypto/Cargo.toml", "format": "toml" },
+        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-crypto = .*version = \"([^\"]+)\"" }
       ],
       "dependsOn": ["ferrlabs-errors"]
     },
@@ -38,18 +42,22 @@
       "path": "crates/db",
       "changelog": "crates/db/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/db/Cargo.toml", "format": "toml" }
+        { "path": "crates/db/Cargo.toml", "format": "toml" },
+        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-db = .*version = \"([^\"]+)\"" }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"]
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"],
+      "sharedPaths": ["Cargo.toml"]
     },
     {
       "name": "ferrlabs-auth",
       "path": "crates/auth",
       "changelog": "crates/auth/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/auth/Cargo.toml", "format": "toml" }
+        { "path": "crates/auth/Cargo.toml", "format": "toml" },
+        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-auth = .*version = \"([^\"]+)\"" }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-crypto", "ferrlabs-db"]
+      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-crypto", "ferrlabs-db"],
+      "sharedPaths": ["Cargo.toml"]
     },
     {
       "name": "ferrlabs-billing",
@@ -84,6 +92,15 @@
       "versionedFiles": [
         { "path": "crates/license/Cargo.toml", "format": "toml" }
       ]
+    },
+    {
+      "name": "ferrlabs-testkit",
+      "path": "crates/testkit",
+      "changelog": "crates/testkit/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/testkit/Cargo.toml", "format": "toml" }
+      ],
+      "sharedPaths": ["Cargo.toml"]
     }
   ]
 }

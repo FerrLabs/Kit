@@ -94,10 +94,12 @@ impl TestDb {
             .connect_with(admin.clone())
             .await
             .context("connecting to TEST_DATABASE_URL")?;
-        sqlx::query(&format!("CREATE DATABASE \"{db_name}\""))
-            .execute(&admin_pool)
-            .await
-            .context("creating ephemeral test database")?;
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "CREATE DATABASE \"{db_name}\""
+        )))
+        .execute(&admin_pool)
+        .await
+        .context("creating ephemeral test database")?;
         admin_pool.close().await;
         let pool = PgPoolOptions::new()
             .max_connections(5)
