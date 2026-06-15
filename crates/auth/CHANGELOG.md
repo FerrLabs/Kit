@@ -4,6 +4,19 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-06-15
+
+### Features
+
+- feat(middleware): land decoupled CORS layer (#114)
+- feat(telemetry): implement init() with tracing-subscriber + OTLP export (#113)
+- feat(license): add licensegen minting tool behind the cli feature (#111)
+- feat(license): add ferrlabs-license crate for offline self-host license gating (#109)
+
+### Bug Fixes
+
+- fix(auth): implement AuthUser FromRequestParts JWT extractor (#115)
+
 ## [0.4.0] - 2026-06-08
 
 ### Features
