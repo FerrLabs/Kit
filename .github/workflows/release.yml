@@ -25,21 +25,3 @@ jobs:
       dry-run: ${{ inputs.dry_run || false }}
       trigger-renovate: true
     secrets: inherit
-
-  publish:
-    name: Publish to Kellnr
-    needs: release
-    if: ${{ inputs.dry_run != true }}
-    runs-on: ${{ github.event.repository.private && 'ferrlabs-k8s' || 'ubuntu-latest' }}
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: main
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Publish workspace crates to Kellnr
-        env:
-          CARGO_REGISTRIES_KELLNR_TOKEN: ${{ secrets.CARGO_REGISTRIES_KELLNR_TOKEN }}
-        run: bash scripts/publish-kellnr.sh
