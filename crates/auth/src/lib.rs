@@ -11,9 +11,12 @@
 //! - [`session`] — refresh sessions persisted in Postgres, with rotation
 //!   and reuse-based theft detection
 //!
+//! ## Implemented (M3)
+//!
+//! - [`oauth`] — OAuth authorization-code login (GitHub, Google) with PKCE
+//!
 //! ## Scaffolded (later milestones)
 //!
-//! - [`oauth`] — OAuth providers (GitHub, Google) — M3
 //! - [`totp`] — TOTP MFA — M3
 //! - [`middleware`] — axum extractor for protected routes — M1
 //!
@@ -33,6 +36,7 @@ pub mod totp;
 
 pub use jwt::{Claims, JwtConfig, JwtError, issue_token, verify_token};
 pub use middleware::AuthUser;
+pub use oauth::{AuthorizeRequest, OAuthClient, OAuthError, OAuthProvider, OAuthUser};
 pub use password::{hash as hash_password, verify as verify_password};
 pub use session::{
     DEFAULT_REFRESH_TTL, IssuedSession, PgSessionStore, Session, SessionError, SessionStore,
