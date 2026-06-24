@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-billing` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-06-24
+
+### Features
+
+- feat(billing): Stripe client + webhook signature verification (#126)
+
 ## [0.3.2] - 2026-06-15
 
 ## [0.3.1] - 2026-05-05

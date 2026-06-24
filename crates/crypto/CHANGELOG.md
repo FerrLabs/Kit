@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-crypto` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.1] - 2026-06-24
+
 ## [0.4.0] - 2026-06-15
 
 ### Breaking Changes

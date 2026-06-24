@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.0] - 2026-06-24
+
+### Features
+
+- feat(billing): Stripe client + webhook signature verification (#126)
+
 ## [0.6.0] - 2026-06-15
 
 ### Breaking Changes
