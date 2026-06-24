@@ -81,7 +81,7 @@ ferrlabs-errors = { path = "crates/errors", version = "0.4.0", registry = "kelln
 ferrlabs-types = { path = "crates/types", version = "0.4.2", registry = "kellnr" }
 ferrlabs-db = { path = "crates/db", version = "0.4.0", registry = "kellnr" }
 ferrlabs-crypto = { path = "crates/crypto", version = "0.4.1", registry = "kellnr" }
-ferrlabs-auth = { path = "crates/auth", version = "0.7.0", registry = "kellnr" }
+ferrlabs-auth = { path = "crates/auth", version = "0.8.0", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "0.3.1", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "0.2.4", registry = "kellnr" }
 ferrlabs-permissions = { path = "crates/permissions", version = "0.2.0", registry = "kellnr" }

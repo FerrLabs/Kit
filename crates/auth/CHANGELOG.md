@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.8.0] - 2026-06-24
+
+### Features
+
+- feat(auth): TOTP 2FA with envelope-encrypted seeds and recovery codes (#128)
+
 ## [0.7.0] - 2026-06-24
 
 ### Features
