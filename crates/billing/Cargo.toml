@@ -1,6 +1,6 @@
 [package]
 name = "ferrlabs-billing"
-version = "0.3.2"
+version = "0.4.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -11,22 +11,15 @@ description = "Stripe integration for FerrLabs — customers, subscriptions, web
 [dependencies]
 ferrlabs-errors = { workspace = true }
 ferrlabs-types = { workspace = true }
-ferrlabs-db = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-# TODO: re-enable once async-stripe publishes a version that compiles on
-# stable Rust. 0.40.2 has unresolved imports in its own source
-# (CheckoutSessionItem, AccountCapabilities, PaymentLink). Billing is
-# scaffold-only right now so the dep is unused.
-#
-# V1 ships per-product subscriptions persisted in the FerrLabs DB only
-# (status `trialing|active|canceled`, 14-day trial clock). Stripe
-# Customer mint, Checkout, Customer Portal and the
-# `/v1/billing/webhook` endpoint land in V1.1 once we pick a stripe
-# crate that compiles. See FerrLabs-Cloud `routes/subscriptions.rs`
-# for the V1 DB-only path.
-# async-stripe = { version = "0.40", default-features = false, features = ["runtime-tokio-hyper-rustls", "billing", "webhook-events"] }
+async-stripe = { version = "0.41", default-features = false, features = ["runtime-tokio-hyper-rustls", "billing", "checkout"] }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+subtle = { workspace = true }
 anyhow = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
