@@ -204,11 +204,19 @@ impl OAuthClient {
             form.push(("code_verifier", verifier));
         }
 
+        let body = url::form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(&form)
+            .finish();
+
         let resp = self
             .http
             .post(self.provider.token_endpoint())
             .header(reqwest::header::ACCEPT, "application/json")
-            .form(&form)
+            .header(
+                reqwest::header::CONTENT_TYPE,
+                "application/x-www-form-urlencoded",
+            )
+            .body(body)
             .send()
             .await?
             .error_for_status()?;
