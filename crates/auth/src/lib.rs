@@ -14,10 +14,10 @@
 //! ## Implemented (M3)
 //!
 //! - [`oauth`] — OAuth authorization-code login (GitHub, Google) with PKCE
+//! - [`totp`] — TOTP MFA with envelope-encrypted seeds + recovery codes
 //!
 //! ## Scaffolded (later milestones)
 //!
-//! - [`totp`] — TOTP MFA — M3
 //! - [`middleware`] — axum extractor for protected routes — M1
 //!
 //! ## Unmigrated
@@ -41,4 +41,8 @@ pub use password::{hash as hash_password, verify as verify_password};
 pub use session::{
     DEFAULT_REFRESH_TTL, IssuedSession, PgSessionStore, Session, SessionError, SessionStore,
     generate_refresh_token, hash_refresh_token,
+};
+pub use totp::{
+    DEFAULT_RECOVERY_CODE_COUNT, ISSUER, RecoveryCode, TotpEnrollment, TotpError,
+    generate_recovery_codes, hash_recovery_code, unseal_seed, verify_and_consume,
 };
