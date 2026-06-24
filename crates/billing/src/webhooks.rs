@@ -17,6 +17,7 @@
 //! security-critical path is pure, has no network or runtime dependency, and
 //! is exhaustively unit-tested.
 
+use hmac::digest::KeyInit;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use subtle::ConstantTimeEq;
