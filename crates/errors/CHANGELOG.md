@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-errors` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-06-25
+
+### Features
+
+- feat(auth): TOTP 2FA with envelope-encrypted seeds and recovery codes (#128)
+
 ## [0.4.0] - 2026-06-24
 
 ### Features
