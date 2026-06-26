@@ -119,9 +119,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.102"
+version = "1.0.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
+checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "argon2"
@@ -1126,7 +1126,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1160,7 +1160,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1180,7 +1180,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1199,7 +1199,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1211,7 +1211,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1259,7 +1259,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "anyhow",
  "axum",
@@ -1329,7 +1329,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "sqlx",
@@ -1340,7 +1340,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "chrono",
  "serde",
