@@ -55,6 +55,15 @@
       "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
     },
     {
+      "name": "ferrlabs-cache",
+      "path": "crates/cache",
+      "changelog": "crates/cache/CHANGELOG.md",
+      "versionedFiles": [
+        { "path": "crates/cache/Cargo.toml", "format": "toml" }
+      ],
+      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+    },
+    {
       "name": "ferrlabs-auth",
       "path": "crates/auth",
       "changelog": "crates/auth/CHANGELOG.md",
