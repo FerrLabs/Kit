@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-07-07
+
+### Features
+
+- feat(cache): add ferrlabs-cache crate (shared Valkey pool + config) (#136)
+
 ## [0.4.0] - 2026-06-25
 
 ### Features
