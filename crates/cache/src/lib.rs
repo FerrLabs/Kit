@@ -34,7 +34,7 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
         .map_err(|e| anyhow::anyhow!("invalid VALKEY_URL: {e}"))?;
     let pool = RedisPool::new(cfg, None, None, None, config.pool_size)
         .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))?;
-    let _ = pool.connect();
+    let _handle = pool.connect();
     pool.wait_for_connect()
         .await
         .map_err(|e| anyhow::anyhow!("Valkey connect failed: {e}"))?;
