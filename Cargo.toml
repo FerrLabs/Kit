@@ -4,6 +4,7 @@ members = [
     "crates/audit",
     "crates/auth",
     "crates/billing",
+    "crates/cache",
     "crates/crypto",
     "crates/db",
     "crates/errors",
@@ -53,6 +54,8 @@ tokio = { version = "1", features = ["full"] }
 
 # DB
 sqlx = { version = "0.9", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
+
+fred = { version = "9" }
 
 # Crypto
 aes-gcm = "0.10"
