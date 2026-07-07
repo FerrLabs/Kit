@@ -20,7 +20,7 @@ jsonwebtoken = { version = "10", default-features = false, features = ["rust_cry
 clap = { version = "4", features = ["derive"], optional = true }
 
 [dev-dependencies]
-ed25519-dalek = { version = "2", features = ["pkcs8", "pem"] }
+ed25519-dalek = { version = "3", features = ["pkcs8", "pem"] }
 rand = { workspace = true }
 
 [[bin]]
