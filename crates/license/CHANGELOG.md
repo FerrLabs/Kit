@@ -4,6 +4,26 @@ All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-07-12
+
+### Breaking Changes
+
+- feat!: upgrade to sqlx 0.9 across sqlx-exposing crates (#117)
+
+### Features
+
+- feat(cache): add ferrlabs-cache crate (shared Valkey pool + config) (#136)
+- feat(auth): TOTP 2FA with envelope-encrypted seeds and recovery codes (#128)
+- feat(auth): Google + GitHub OAuth authorization-code flow with PKCE (#127)
+- feat(billing): Stripe client + webhook signature verification (#126)
+- feat(middleware): land decoupled CORS layer (#114)
+- feat(telemetry): implement init() with tracing-subscriber + OTLP export (#113)
+
+### Bug Fixes
+
+- fix(deps): update rust crate reqwest to 0.13 (#62)
+- fix(auth): implement AuthUser FromRequestParts JWT extractor (#115)
+
 ## [0.3.0] - 2026-06-12
 
 ### Features
