@@ -4,6 +4,19 @@ All notable changes to `ferrlabs-cache` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-07-13
+
+### Features
+
+- feat(cache): helper SWR stale-while-revalidate + single-flight (#146)
+- feat(telemetry): Prometheus HTTP metrics middleware + /metrics server (Kit#4) (#141)
+
+### Bug Fixes
+
+- fix(deps): update rust crate prometheus to 0.14 (#145)
+- fix(telemetry): mark gather() #[must_use] (#144)
+- fix(telemetry): document serve() error contract (re-release 0.7.x — 0.7.0 tagged but not published to kellnr) (#142)
+
 ## [0.2.0] - 2026-07-07
 
 ### Breaking Changes
