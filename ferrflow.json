@@ -4,6 +4,7 @@
     "versioning": "zerover",
     "tagTemplate": "{name}@v{version}",
     "recoverMissedReleases": true,
+    "deferPublish": true,
     "registries": {
       "kellnr": { "tokenEnv": "CARGO_REGISTRIES_KELLNR_TOKEN" }
     }
