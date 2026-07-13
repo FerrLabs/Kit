@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.3] - 2026-07-13
+
+### Bug Fixes
+
+- fix(deps): update rust crate prometheus to 0.14 (#145)
+
 ## [0.7.2] - 2026-07-13
 
 ### Bug Fixes
