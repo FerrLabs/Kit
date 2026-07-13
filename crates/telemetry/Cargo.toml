@@ -31,7 +31,7 @@ hex = { workspace = true }
 ferrlabs-types = { workspace = true }
 
 # `metrics` feature only.
-prometheus = { version = "0.13", optional = true }
+prometheus = { version = "0.14", optional = true }
 axum = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
