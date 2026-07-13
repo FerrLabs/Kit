@@ -107,6 +107,7 @@ pub fn set_db_pool(in_use: i64, idle: i64) {
 }
 
 /// Encode the whole registry as a Prometheus text-exposition document.
+#[must_use]
 pub fn gather() -> String {
     let encoder = TextEncoder::new();
     let families = REGISTRY.gather();
