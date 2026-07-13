@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.2] - 2026-07-13
+
+### Bug Fixes
+
+- fix(telemetry): mark gather() #[must_use] (#144)
+
 ## [0.7.1] - 2026-07-13
 
 ### Bug Fixes
