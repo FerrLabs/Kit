@@ -4,10 +4,12 @@
 //! `tracing-subscriber` with JSON output for log collectors and OTLP gRPC
 //! export if `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
 //!
-//! Unmigrated: `_unmigrated/metrics.rs.unmigrated` is the raw port of
-//! Application's Prometheus counters — needs registry injection before
-//! it compiles standalone. Tracked in
-//! [Kit#4](https://github.com/FerrLabs/Kit/issues/4).
+//! With the `metrics` feature, [`metrics`] adds Prometheus HTTP request
+//! metrics: a [`metrics::track`] axum middleware and a self-contained
+//! [`metrics::serve`] `/metrics` server for a private (non-ingress) port. The
+//! `service` label is applied by Prometheus at scrape time, so one binary works
+//! under any service name. Services register extra collectors on
+//! [`metrics::registry`].
 //!
 //! The [`events`] module is a separate, transport-agnostic registry of
 //! product-analytics events (org/auth/cli/per-product). It does not depend
@@ -15,6 +17,9 @@
 //! product, including CLIs.
 
 pub mod events;
+
+#[cfg(feature = "metrics")]
+pub mod metrics;
 
 use std::env;
 
