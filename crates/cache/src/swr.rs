@@ -117,10 +117,19 @@ impl Swr<'_> {
         // perdants attendent brièvement (poll) que la valeur apparaisse,
         // sinon rechargent en dernier recours (jamais d'attente infinie).
         if self.try_lock(&lock_key).await {
-            let v = (loader)().await?;
-            let _ = self.store(&v).await;
-            let _: Result<(), _> = self.pool.del(&lock_key).await;
-            return Ok(v);
+            // Libère le lock que le loader réussisse OU échoue, sinon il fuit
+            // pendant tout lock_ttl et bloque les lecteurs concurrents.
+            return match (loader)().await {
+                Ok(v) => {
+                    let _ = self.store(&v).await;
+                    let _: Result<(), _> = self.pool.del(&lock_key).await;
+                    Ok(v)
+                }
+                Err(e) => {
+                    let _: Result<(), _> = self.pool.del(&lock_key).await;
+                    Err(e)
+                }
+            };
         }
 
         let poll_interval = Duration::from_millis(25);
@@ -327,5 +336,48 @@ mod tests {
         );
         tokio::time::sleep(Duration::from_millis(50)).await; // laisse le refresh finir
         assert_eq!(calls.load(Ordering::SeqCst), 2, "1 miss + 1 refresh unique");
+    }
+
+    #[tokio::test]
+    async fn miss_loader_error_releases_lock() {
+        let Some(pool) = pool().await else {
+            return;
+        };
+        let key = "test:swr:miss-err";
+        let lock_key = format!("{key}:lock");
+        let _: Result<(), _> = pool.del(key).await;
+        let _: Result<(), _> = pool.del(lock_key.as_str()).await;
+        let swr = || Swr {
+            pool: &pool,
+            key,
+            fresh_ttl: Duration::from_secs(60),
+            hard_ttl: Duration::from_secs(120),
+            // court : même en cas de régression le poll de secours ne bloque pas trop.
+            lock_ttl: Duration::from_secs(5),
+            bypass: false,
+        };
+        // miss + loader qui échoue => Err renvoyée, mais le lock DOIT être libéré.
+        let err = swr()
+            .get_or_load(|| async { Err::<u32, anyhow::Error>(anyhow::anyhow!("boom")) })
+            .await;
+        assert!(err.is_err(), "loader échoue => Err propagée");
+        // Preuve directe : le lock single-flight ne fuit pas.
+        let exists: i64 = pool.exists(lock_key.as_str()).await.unwrap();
+        assert_eq!(
+            exists, 0,
+            "lock libéré après erreur du loader (pas de fuite)"
+        );
+        // Preuve indirecte : un second appel (loader OK) charge immédiatement,
+        // sans devoir attendre l'expiration de lock_ttl.
+        let start = std::time::Instant::now();
+        let v = swr()
+            .get_or_load(|| async { Ok::<u32, anyhow::Error>(99) })
+            .await
+            .unwrap();
+        assert_eq!(v, 99);
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "seconde lecture immédiate (lock non fuité)"
+        );
     }
 }
