@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.1] - 2026-07-13
+
+### Bug Fixes
+
+- fix(telemetry): document serve() error contract (re-release 0.7.x — 0.7.0 tagged but not published to kellnr) (#142)
+
 ## [0.7.0] - 2026-07-13
 
 ### Breaking Changes
