@@ -17,17 +17,17 @@ use std::sync::LazyLock;
 use std::time::Instant;
 
 use axum::{
+    Router,
     extract::{MatchedPath, Request},
-    http::{header::CONTENT_TYPE, HeaderMap, HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode, header::CONTENT_TYPE},
     middleware::Next,
     response::{IntoResponse, Response},
     routing::get,
-    Router,
 };
 use prometheus::{
+    Encoder, HistogramVec, IntCounterVec, IntGauge, Registry, TextEncoder,
     register_histogram_vec_with_registry, register_int_counter_vec_with_registry,
-    register_int_gauge_with_registry, Encoder, HistogramVec, IntCounterVec, IntGauge, Registry,
-    TextEncoder,
+    register_int_gauge_with_registry,
 };
 
 /// Private registry — kept off the `prometheus` global so multiple in-process
@@ -153,7 +153,9 @@ pub async fn track(request: Request, next: Next) -> Response {
 /// string, scrapers must send `Authorization: Bearer <token>`; otherwise the
 /// endpoint is open (safe when bound to a private, non-ingress port).
 pub fn metrics_router(token: Option<String>) -> Router {
-    let token = token.map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
+    let token = token
+        .map(|t| t.trim().to_string())
+        .filter(|t| !t.is_empty());
     Router::new().route(
         "/metrics",
         get({
@@ -172,7 +174,10 @@ pub fn metrics_router(token: Option<String>) -> Router {
                         }
                     }
                     (
-                        [(CONTENT_TYPE, HeaderValue::from_static(PROMETHEUS_CONTENT_TYPE))],
+                        [(
+                            CONTENT_TYPE,
+                            HeaderValue::from_static(PROMETHEUS_CONTENT_TYPE),
+                        )],
                         gather(),
                     )
                         .into_response()
@@ -213,9 +218,7 @@ mod tests {
         record_request("GET", "/tdd-req-a", 200, 0.01);
         let text = gather();
         assert!(
-            text.contains(
-                r#"http_requests_total{method="GET",route="/tdd-req-a",status="200"} 1"#
-            ),
+            text.contains(r#"http_requests_total{method="GET",route="/tdd-req-a",status="200"} 1"#),
             "counter series missing/miscounted:\n{text}"
         );
     }
@@ -225,7 +228,9 @@ mod tests {
         record_request("POST", "/tdd-dur-a", 201, 0.2);
         let text = gather();
         assert!(
-            text.contains(r#"http_request_duration_seconds_bucket{method="POST",route="/tdd-dur-a""#),
+            text.contains(
+                r#"http_request_duration_seconds_bucket{method="POST",route="/tdd-dur-a""#
+            ),
             "duration histogram buckets missing for the route:\n{text}"
         );
     }
@@ -235,7 +240,10 @@ mod tests {
         record_request("GET", "/tdd-help-a", 200, 0.01);
         let text = gather();
         assert!(text.contains("# HELP http_requests_total"), "{text}");
-        assert!(text.contains("# TYPE http_requests_total counter"), "{text}");
+        assert!(
+            text.contains("# TYPE http_requests_total counter"),
+            "{text}"
+        );
         assert!(
             text.contains("# TYPE http_request_duration_seconds histogram"),
             "{text}"
@@ -253,7 +261,7 @@ mod tests {
     }
 
     use axum::{
-        body::{to_bytes, Body},
+        body::{Body, to_bytes},
         http::{Request as HttpRequest, StatusCode},
         middleware::from_fn,
         routing::get,
@@ -305,7 +313,10 @@ mod tests {
             .get("content-type")
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
-        assert!(ct.starts_with("text/plain"), "unexpected content-type: {ct}");
+        assert!(
+            ct.starts_with("text/plain"),
+            "unexpected content-type: {ct}"
+        );
         let body = to_bytes(resp.into_body(), 1 << 20).await.unwrap();
         assert!(String::from_utf8_lossy(&body).contains("http_requests_total"));
     }
