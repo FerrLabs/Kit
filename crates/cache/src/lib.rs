@@ -8,6 +8,9 @@ use fred::prelude::*;
 
 pub use fred;
 
+mod swr;
+pub use swr::Swr;
+
 #[derive(Debug, Clone)]
 pub struct CacheConfig {
     pub url: String,

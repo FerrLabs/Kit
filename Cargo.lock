@@ -1267,6 +1267,9 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "fred",
+ "serde",
+ "serde_json",
+ "tokio",
  "tracing",
 ]
 
@@ -1401,7 +1404,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-telemetry"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "axum",

@@ -12,6 +12,12 @@ description = "Shared Valkey (Redis-compatible) connection pool and config for F
 fred = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
 
 [lints]
 workspace = true
