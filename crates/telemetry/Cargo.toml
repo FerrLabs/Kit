@@ -6,7 +6,12 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "Tracing/OTLP setup + product analytics event registry for FerrLabs services and CLIs."
+description = "Tracing/OTLP setup, Prometheus HTTP metrics, and product analytics event registry for FerrLabs services and CLIs."
+
+[features]
+# Prometheus HTTP request metrics + a self-contained `/metrics` server. Gated so
+# CLIs that only use `events`/`init` don't pull axum/prometheus/tokio.
+metrics = ["dep:prometheus", "dep:axum", "dep:tokio"]
 
 [dependencies]
 tracing = { workspace = true }
@@ -25,8 +30,15 @@ blake3 = "1.5"
 hex = { workspace = true }
 ferrlabs-types = { workspace = true }
 
+# `metrics` feature only.
+prometheus = { version = "0.13", optional = true }
+axum = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+
 [dev-dependencies]
 serde_json = { workspace = true }
+tower = { workspace = true }
+tokio = { workspace = true }
 
 [lints]
 workspace = true
