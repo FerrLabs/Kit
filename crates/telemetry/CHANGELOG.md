@@ -4,6 +4,24 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.0] - 2026-07-13
+
+### Breaking Changes
+
+- feat!: upgrade to sqlx 0.9 across sqlx-exposing crates (#117)
+
+### Features
+
+- feat(telemetry): Prometheus HTTP metrics middleware + /metrics server (Kit#4) (#141)
+- feat(cache): add ferrlabs-cache crate (shared Valkey pool + config) (#136)
+- feat(auth): TOTP 2FA with envelope-encrypted seeds and recovery codes (#128)
+- feat(auth): Google + GitHub OAuth authorization-code flow with PKCE (#127)
+- feat(billing): Stripe client + webhook signature verification (#126)
+
+### Bug Fixes
+
+- fix(deps): update rust crate reqwest to 0.13 (#62)
+
 ## [0.6.0] - 2026-06-15
 
 ### Features
