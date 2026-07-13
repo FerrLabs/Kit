@@ -190,6 +190,10 @@ pub fn metrics_router(token: Option<String>) -> Router {
 /// Bind `addr` and serve [`metrics_router`] on it. Run this on a dedicated,
 /// non-ingress port (e.g. `0.0.0.0:9100`) so `/metrics` is only reachable by
 /// the in-cluster Prometheus, never through the public API host.
+///
+/// # Errors
+/// Returns the bind error if `addr` is already in use or not permitted, or the
+/// serve error if the accept loop terminates abnormally.
 pub async fn serve(addr: SocketAddr, token: Option<String>) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, metrics_router(token)).await
