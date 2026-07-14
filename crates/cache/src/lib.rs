@@ -164,4 +164,41 @@ mod tests {
             );
         }
     }
+
+    #[tokio::test]
+    async fn rejects_wrong_explicit_ca() {
+        // Exercises the primary security path directly: an explicit
+        // `ca_cert_path` pointing at a CA (CA_B) that did NOT sign the
+        // server's certificate (signed by CA_A). The custom `RootCertStore`
+        // built in `rustls_config_with_ca` must reject the server cert —
+        // proving it verifies against the provided CA rather than accepting
+        // anything.
+        let Some((url, _)) = tls_env() else {
+            eprintln!("skipping: TEST_VALKEY_TLS_URL / TEST_VALKEY_TLS_CA not set");
+            return;
+        };
+        let Ok(wrong_ca) = std::env::var("TEST_VALKEY_TLS_WRONG_CA") else {
+            eprintln!("skipping: TEST_VALKEY_TLS_WRONG_CA not set");
+            return;
+        };
+
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(10),
+            connect(&CacheConfig {
+                url,
+                pool_size: 1,
+                ca_cert_path: Some(wrong_ca),
+            }),
+        )
+        .await;
+
+        // Explicit connect error, or a timeout on a handshake that never
+        // completes: both prove the wrong CA was not accepted.
+        if let Ok(connect_result) = result {
+            assert!(
+                connect_result.is_err(),
+                "connecting over TLS with a non-signing CA must fail"
+            );
+        }
+    }
 }
