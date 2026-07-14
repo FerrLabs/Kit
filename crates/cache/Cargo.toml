@@ -9,7 +9,8 @@ rust-version.workspace = true
 description = "Shared Valkey (Redis-compatible) connection pool and config for FerrLabs APIs."
 
 [dependencies]
-fred = { workspace = true }
+fred = { workspace = true, features = ["enable-rustls-ring"] }
+rustls-pemfile = "2"
 anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
