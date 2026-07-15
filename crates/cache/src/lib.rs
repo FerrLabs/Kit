@@ -46,24 +46,50 @@ pub type CachePool = RedisPool;
 /// `%`, ...) in a raw password — e.g. a base64-generated Valkey password —
 /// don't get misparsed as part of the host, path, or query.
 ///
-/// The host is assumed to never contain `@`, so splitting on the *last* `@`
-/// in `scheme://...` unambiguously separates userinfo from the rest, even
-/// when the password itself contains `@`. Within the userinfo, the *first*
-/// `:` separates `user` from `password` (Valkey's typical `:password` form
-/// has an empty `user`), so a password containing `:` is preserved intact.
+/// Finding the userinfo/host boundary in a URL whose password is *not* yet
+/// encoded is a chicken-and-egg problem: the password may itself contain the
+/// very delimiters used to find the boundary. Two rules resolve it:
 ///
-/// URLs with no userinfo (no `@` after the scheme) are returned unchanged.
+/// - The search for the `@` is bounded to the left of the first `?` or `#`.
+///   A query/fragment may legitimately contain `@` (e.g. fred accepts
+///   `redis://host:6379/0?node=host:port`), and an unbounded `rfind('@')`
+///   would mistake that `@` for the separator and silently drop the real
+///   host. The bound is `?`/`#` and deliberately **not** `/`: the password
+///   routinely contains `/` (that is this function's whole reason to exist),
+///   so bounding at the first `/` would find a `/` *inside* the password,
+///   truncate the authority before the real `@`, and skip encoding entirely.
+///   This relies on the password containing no raw `?`/`#` — true for the
+///   base64 (`A-Za-z0-9+/=`) and hex alphabets used to generate them.
+/// - Within that bound, the separator is the *last* `@`: the host never
+///   contains `@`, so a password that does is still split correctly.
+///
+/// The host then ends at the first `/`, `?` or `#` **at or after** that `@`;
+/// everything from there on (path/query/fragment) is passed through verbatim
+/// — never re-encoded or altered.
+///
+/// Within the userinfo, the *first* `:` separates `user` from `password`
+/// (Valkey's typical `:password` form has an empty `user`), so a password
+/// containing `:` is preserved intact.
+///
+/// URLs with no userinfo (no `@` before any `?`/`#`) are returned unchanged.
 fn percent_encode_userinfo(url: &str) -> String {
     let Some(scheme_end) = url.find("://") else {
         return url.to_string();
     };
     let (scheme, rest) = url.split_at(scheme_end + 3);
 
-    let Some(at_pos) = rest.rfind('@') else {
+    // Bound the userinfo search to the left of any query/fragment.
+    let search_end = rest.find(['?', '#']).unwrap_or(rest.len());
+    let Some(at_pos) = rest[..search_end].rfind('@') else {
         return url.to_string();
     };
-    let (userinfo, host_part) = rest.split_at(at_pos);
-    let host_part = &host_part[1..]; // drop the leading '@'
+
+    let (userinfo, after_at) = rest.split_at(at_pos);
+    let after_at = &after_at[1..]; // drop the leading '@'
+
+    // The host runs from the '@' to the first '/', '?' or '#'.
+    let host_end = after_at.find(['/', '?', '#']).unwrap_or(after_at.len());
+    let (host_part, tail) = after_at.split_at(host_end);
 
     // Encode everything that is not an unreserved character (RFC 3986),
     // which in particular covers '%' itself (so an already-`%`-containing
@@ -74,10 +100,10 @@ fn percent_encode_userinfo(url: &str) -> String {
     if let Some((user, pass)) = userinfo.split_once(':') {
         let enc_user = percent_encoding::utf8_percent_encode(user, encode_set);
         let enc_pass = percent_encoding::utf8_percent_encode(pass, encode_set);
-        format!("{scheme}{enc_user}:{enc_pass}@{host_part}")
+        format!("{scheme}{enc_user}:{enc_pass}@{host_part}{tail}")
     } else {
         let enc_user = percent_encoding::utf8_percent_encode(userinfo, encode_set);
-        format!("{scheme}{enc_user}@{host_part}")
+        format!("{scheme}{enc_user}@{host_part}{tail}")
     }
 }
 
@@ -284,6 +310,58 @@ mod tests {
     #[test]
     fn percent_encode_userinfo_leaves_url_without_userinfo_unchanged() {
         let raw = "redis://127.0.0.1:6379";
+        assert_eq!(percent_encode_userinfo(raw), raw);
+    }
+
+    #[test]
+    fn percent_encode_userinfo_preserves_db_index_path() {
+        // fred accepts the DB index as a path (`/0`). The password must be
+        // encoded while the path is passed through verbatim.
+        let raw = "redis://:ab/cd@127.0.0.1:6379/0";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:ab%2Fcd@127.0.0.1:6379/0");
+    }
+
+    #[test]
+    fn percent_encode_userinfo_ignores_at_sign_outside_the_authority() {
+        // A path/query may legitimately contain '@'. Searching the whole
+        // URL for the last '@' would treat `?note=a@b`'s '@' as the
+        // userinfo separator and silently drop the real host (producing
+        // host_part = "b"). The search must be bounded to the authority.
+        let raw = "redis://:pw@127.0.0.1:6379/0?note=a@b";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:pw@127.0.0.1:6379/0?note=a@b");
+
+        // And the host actually survives a real parse.
+        let parsed = RedisConfig::from_url(&sanitized).expect("should parse");
+        let host = &parsed.server.hosts()[0];
+        assert_eq!(&*host.host, "127.0.0.1");
+        assert_eq!(host.port, 6379);
+    }
+
+    #[test]
+    fn percent_encode_userinfo_handles_slash_password_together_with_path_and_query() {
+        // The hard case, combining both hazards: the password contains '/'
+        // (so the authority cannot be bounded at the first '/') AND the
+        // query contains '@' (so the '@' search cannot be unbounded).
+        let raw = "redis://:ab/cd+ef=gh@127.0.0.1:6379/0?note=a@b";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(
+            sanitized,
+            "redis://:ab%2Fcd%2Bef%3Dgh@127.0.0.1:6379/0?note=a@b"
+        );
+
+        let parsed = RedisConfig::from_url(&sanitized).expect("should parse");
+        let host = &parsed.server.hosts()[0];
+        assert_eq!(&*host.host, "127.0.0.1");
+        assert_eq!(host.port, 6379);
+    }
+
+    #[test]
+    fn percent_encode_userinfo_leaves_url_without_userinfo_but_with_path_query_unchanged() {
+        // No credentials at all: the '@' in the query must not be mistaken
+        // for a userinfo separator — URL returned verbatim.
+        let raw = "redis://127.0.0.1:6379/0?x=1@2";
         assert_eq!(percent_encode_userinfo(raw), raw);
     }
 
