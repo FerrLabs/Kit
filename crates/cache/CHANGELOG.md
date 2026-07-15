@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-cache` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-07-15
+
+### Features
+
+- feat(cache): support TLS client (rustls) avec vérification CA (#147)
+
 ## [0.3.0] - 2026-07-13
 
 ### Features
