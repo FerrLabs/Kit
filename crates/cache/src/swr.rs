@@ -222,6 +222,7 @@ mod tests {
             url,
             pool_size: 2,
             ca_cert_path: None,
+            password: None,
         })
         .await
         .ok()
