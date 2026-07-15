@@ -11,6 +11,7 @@ description = "Shared Valkey (Redis-compatible) connection pool and config for F
 [dependencies]
 fred = { workspace = true, features = ["enable-rustls-ring"] }
 rustls-pemfile = "2"
+percent-encoding = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

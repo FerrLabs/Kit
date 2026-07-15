@@ -41,6 +41,46 @@ impl CacheConfig {
 
 pub type CachePool = RedisPool;
 
+/// Percent-encode the `user`/`password` portion of a `redis://`/`rediss://`
+/// URL's userinfo so that URL-breaking characters (`/`, `+`, `=`, `@`, `:`,
+/// `%`, ...) in a raw password — e.g. a base64-generated Valkey password —
+/// don't get misparsed as part of the host, path, or query.
+///
+/// The host is assumed to never contain `@`, so splitting on the *last* `@`
+/// in `scheme://...` unambiguously separates userinfo from the rest, even
+/// when the password itself contains `@`. Within the userinfo, the *first*
+/// `:` separates `user` from `password` (Valkey's typical `:password` form
+/// has an empty `user`), so a password containing `:` is preserved intact.
+///
+/// URLs with no userinfo (no `@` after the scheme) are returned unchanged.
+fn percent_encode_userinfo(url: &str) -> String {
+    let Some(scheme_end) = url.find("://") else {
+        return url.to_string();
+    };
+    let (scheme, rest) = url.split_at(scheme_end + 3);
+
+    let Some(at_pos) = rest.rfind('@') else {
+        return url.to_string();
+    };
+    let (userinfo, host_part) = rest.split_at(at_pos);
+    let host_part = &host_part[1..]; // drop the leading '@'
+
+    // Encode everything that is not an unreserved character (RFC 3986),
+    // which in particular covers '%' itself (so an already-`%`-containing
+    // raw password isn't double-decoded), '/', '+', '=', '@', ':', '#',
+    // '?', and '&'.
+    let encode_set: &percent_encoding::AsciiSet = percent_encoding::NON_ALPHANUMERIC;
+
+    if let Some((user, pass)) = userinfo.split_once(':') {
+        let enc_user = percent_encoding::utf8_percent_encode(user, encode_set);
+        let enc_pass = percent_encoding::utf8_percent_encode(pass, encode_set);
+        format!("{scheme}{enc_user}:{enc_pass}@{host_part}")
+    } else {
+        let enc_user = percent_encoding::utf8_percent_encode(userinfo, encode_set);
+        format!("{scheme}{enc_user}@{host_part}")
+    }
+}
+
 /// Build a `rustls::ClientConfig` that trusts only the CA certificate(s)
 /// found at `ca_cert_path`, with full server certificate + hostname
 /// verification (no "accept invalid certs" escape hatch).
@@ -68,7 +108,8 @@ fn rustls_config_with_ca(ca_cert_path: &str) -> anyhow::Result<fred::rustls::Cli
 }
 
 pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
-    let mut cfg = RedisConfig::from_url(&config.url)
+    let sanitized_url = percent_encode_userinfo(&config.url);
+    let mut cfg = RedisConfig::from_url(&sanitized_url)
         .map_err(|e| anyhow::anyhow!("invalid VALKEY_URL: {e}"))?;
 
     let tls_enabled = config.url.starts_with("rediss://");
@@ -200,5 +241,99 @@ mod tests {
                 "connecting over TLS with a non-signing CA must fail"
             );
         }
+    }
+
+    // -- percent_encode_userinfo: pure unit tests, no network required --
+
+    #[test]
+    fn percent_encode_userinfo_splits_on_last_at_for_password_containing_at() {
+        // Password itself contains '@'; the host must not absorb it. Only
+        // the *last* '@' in the string is the userinfo/host separator.
+        let raw = "redis://:ab@cd@127.0.0.1:6379";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:ab%40cd@127.0.0.1:6379");
+    }
+
+    #[test]
+    fn percent_encode_userinfo_splits_on_first_colon_for_password_containing_colon() {
+        // Password contains ':'; user/password must split on the *first*
+        // ':' in the userinfo so the rest of the password survives intact.
+        let raw = "redis://:ab:cd@127.0.0.1:6379";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:ab%3Acd@127.0.0.1:6379");
+    }
+
+    #[test]
+    fn percent_encode_userinfo_encodes_percent_sign_itself() {
+        // A raw password already containing a literal '%' must have that
+        // '%' escaped too, otherwise `from_url` would misinterpret it as
+        // the start of a (possibly invalid) percent-escape and mangle the
+        // decoded password.
+        let raw = "redis://:ab%cd@127.0.0.1:6379";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:ab%25cd@127.0.0.1:6379");
+    }
+
+    #[test]
+    fn percent_encode_userinfo_covers_slash_plus_equals() {
+        let raw = "redis://:ab/cd+ef=gh@127.0.0.1:6379";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "redis://:ab%2Fcd%2Bef%3Dgh@127.0.0.1:6379");
+    }
+
+    #[test]
+    fn percent_encode_userinfo_leaves_url_without_userinfo_unchanged() {
+        let raw = "redis://127.0.0.1:6379";
+        assert_eq!(percent_encode_userinfo(raw), raw);
+    }
+
+    #[test]
+    fn percent_encode_userinfo_preserves_rediss_scheme() {
+        let raw = "rediss://:ab/cd@127.0.0.1:6380";
+        let sanitized = percent_encode_userinfo(raw);
+        assert_eq!(sanitized, "rediss://:ab%2Fcd@127.0.0.1:6380");
+    }
+
+    // -- end-to-end: a real Valkey instance with a URL-breaking password --
+
+    /// Gate: run only when a local Valkey with a URL-breaking password is
+    /// available.
+    ///
+    /// `TEST_VALKEY_URL_SAFE_PASSWORD_URL` — the RAW, non-percent-encoded
+    /// `redis://:<password>@host:port` URL, exactly as a Vault template
+    /// would render it (e.g. password `ab/cd+ef=gh` generated by
+    /// `openssl rand -base64 32`).
+    fn url_safe_password_env() -> Option<String> {
+        std::env::var("TEST_VALKEY_URL_SAFE_PASSWORD_URL").ok()
+    }
+
+    #[tokio::test]
+    async fn connects_with_raw_password_containing_url_breaking_characters() {
+        let Some(url) = url_safe_password_env() else {
+            eprintln!("skipping: TEST_VALKEY_URL_SAFE_PASSWORD_URL not set");
+            return;
+        };
+
+        // Before the fix this failed with `invalid VALKEY_URL: Url Error:
+        // EmptyHost`, because the raw '/' in the password terminated the
+        // authority early. The fix pre-encodes the userinfo before handing
+        // the URL to `RedisConfig::from_url`, and `fred`/`url` decode it
+        // back to the raw password for the actual AUTH handshake.
+        let pool = connect(&CacheConfig {
+            url,
+            pool_size: 2,
+            ca_cert_path: None,
+        })
+        .await
+        .expect("connect with a raw URL-breaking password should succeed");
+
+        pool.set::<(), _, _>("ferrlabs-cache:url-safe-pw-test", "ok", None, None, false)
+            .await
+            .expect("SET should succeed once AUTH has decoded the real password");
+        let value: String = pool
+            .get("ferrlabs-cache:url-safe-pw-test")
+            .await
+            .expect("GET should succeed");
+        assert_eq!(value, "ok");
     }
 }

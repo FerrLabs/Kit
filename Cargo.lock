@@ -1263,10 +1263,11 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-cache"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "fred",
+ "percent-encoding",
  "rustls-pemfile 2.2.0",
  "serde",
  "serde_json",
