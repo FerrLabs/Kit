@@ -218,9 +218,13 @@ mod tests {
 
     async fn pool() -> Option<crate::CachePool> {
         let url = std::env::var("TEST_VALKEY_URL").ok()?;
-        crate::connect(&crate::CacheConfig { url, pool_size: 2 })
-            .await
-            .ok()
+        crate::connect(&crate::CacheConfig {
+            url,
+            pool_size: 2,
+            ca_cert_path: None,
+        })
+        .await
+        .ok()
     }
 
     #[tokio::test]
