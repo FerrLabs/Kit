@@ -11,7 +11,12 @@ pub use fred;
 mod swr;
 pub use swr::Swr;
 
-#[derive(Debug, Clone)]
+/// `Debug` is implemented by hand (see below) rather than derived, because
+/// both `url` and `password` can carry the AUTH secret — a derived `Debug`
+/// would print it in the clear via any `{:?}` or `tracing::debug!(?config)`,
+/// defeating the entire point of keeping the password out of the logs.
+/// Do **not** replace it with `#[derive(Debug)]`.
+#[derive(Clone)]
 pub struct CacheConfig {
     pub url: String,
     pub pool_size: usize,
@@ -34,6 +39,55 @@ pub struct CacheConfig {
     /// encoded. A password with `?`/`#` in it must use `password` /
     /// `VALKEY_PASSWORD`.
     pub password: Option<String>,
+}
+
+/// Render a connection URL in a form that is safe to log: the scheme and the
+/// host (`redis://127.0.0.1:6379`), with any userinfo — which routinely
+/// carries the AUTH password in the `redis://:<password>@host` form — and any
+/// path/query/fragment dropped entirely.
+///
+/// When the userinfo boundary cannot be located unambiguously (a password
+/// containing a raw `?`/`#` puts a delimiter *before* the real `@`; see
+/// [`percent_encode_userinfo`]), this bails out to a fully redacted value
+/// rather than risk printing a prefix of the password.
+fn redact_url(url: &str) -> String {
+    let Some(scheme_end) = url.find("://") else {
+        return "<redacted>".to_string();
+    };
+    let (scheme, rest) = url.split_at(scheme_end + 3);
+
+    // Same bounded search as `percent_encode_userinfo`: an '@' after a '?'/'#'
+    // belongs to the query/fragment, not to the userinfo.
+    let search_end = rest.find(['?', '#']).unwrap_or(rest.len());
+    let after_userinfo = match rest[..search_end].rfind('@') {
+        Some(at_pos) => &rest[at_pos + 1..],
+        None if rest.contains('@') => {
+            // There *is* an '@' but only beyond a '?'/'#': the userinfo itself
+            // contains a raw delimiter, so the authority can't be split
+            // safely. Redact wholesale — never print a partial password.
+            return format!("{scheme}<redacted>");
+        }
+        None => rest,
+    };
+
+    let host_end = after_userinfo
+        .find(['/', '?', '#'])
+        .unwrap_or(after_userinfo.len());
+    format!("{scheme}{}", &after_userinfo[..host_end])
+}
+
+/// Hand-written so the AUTH secret never reaches a log line. `password` is
+/// reduced to a presence flag (never its value, never its length), and `url`
+/// is passed through [`redact_url`] because it can embed credentials.
+impl std::fmt::Debug for CacheConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CacheConfig")
+            .field("url", &redact_url(&self.url))
+            .field("pool_size", &self.pool_size)
+            .field("ca_cert_path", &self.ca_cert_path)
+            .field("password", &self.password.as_ref().map(|_| "<redacted>"))
+            .finish()
+    }
 }
 
 impl CacheConfig {
@@ -519,16 +573,25 @@ mod tests {
 
     #[tokio::test]
     async fn url_with_credentials_cannot_represent_a_password_containing_question_mark_or_hash() {
-        // This is the negative half of the proof: demonstrate that the
-        // existing (and still supported) URL-with-credentials path, even
-        // with percent-encoding of the userinfo, cannot get a raw `?`/`#`
-        // password to the server correctly. `percent_encode_userinfo`
-        // bounds its '@' search to *before* the first raw '?'/'#' in the
-        // URL, so a raw '?' or '#' inside the still-unencoded password is
-        // indistinguishable from the start of the URL's own query/fragment:
-        // the authority is truncated there, and the "password" the server
-        // receives is wrong (truncated) — proving VALKEY_PASSWORD is not
-        // redundant with the existing percent-encoding fix.
+        // The negative half of the proof: the existing (and still supported)
+        // URL-with-credentials path cannot carry a raw '?'/'#' password, and
+        // percent-encoding the userinfo cannot rescue it.
+        //
+        // The failure happens at parse time, before any network I/O — there
+        // is no AUTH round-trip and no WRONGPASS here:
+        //   1. `percent_encode_userinfo` bounds its '@' search to the left of
+        //      the first '?'/'#'. In `redis://:pa?ss#word/x+y=z@host:port`
+        //      that '?' sits *inside* the still-unencoded password, so no '@'
+        //      is found within the bound and the URL is returned UNCHANGED
+        //      (no encoding applied at all).
+        //   2. `RedisConfig::from_url` then parses that raw URL, reads the
+        //      authority as ending at the '?', finds no host, and rejects it
+        //      with `Url Error: EmptyHost` — surfaced as `invalid VALKEY_URL`.
+        //
+        // Loosening the bound doesn't help either: the ambiguity is
+        // structural. A raw '?' in a password is indistinguishable from the
+        // URL's own query delimiter. Hence VALKEY_PASSWORD — this case is not
+        // redundant with the percent-encoding fix.
         let Some((url, password)) = unencodable_password_env() else {
             eprintln!(
                 "skipping: TEST_VALKEY_UNENCODABLE_PASSWORD_URL / TEST_VALKEY_UNENCODABLE_PASSWORD not set"
@@ -630,5 +693,87 @@ mod tests {
             .await
             .expect("GET should succeed");
         assert_eq!(value, "ok");
+    }
+
+    // -- Debug redaction: the secret must never reach a log line --
+
+    #[test]
+    fn debug_redacts_password_and_url_credentials() {
+        // A derived `Debug` would print both the `password` field and the
+        // credentials embedded in `url` in the clear, which would defeat the
+        // whole point of keeping the password out of the logs.
+        let config = CacheConfig {
+            url: "redis://:supersecret@host:6379".to_string(),
+            pool_size: 6,
+            ca_cert_path: None,
+            password: Some("supersecret".to_string()),
+        };
+
+        let rendered = format!("{config:?}");
+
+        assert!(
+            !rendered.contains("supersecret"),
+            "Debug must not leak the password (from the field or the URL), got: {rendered}"
+        );
+        assert!(
+            rendered.contains("<redacted>"),
+            "Debug should mark the password as redacted, got: {rendered}"
+        );
+        // The non-secret parts stay useful for debugging.
+        assert!(
+            rendered.contains("host:6379"),
+            "Debug should keep the host for debuggability, got: {rendered}"
+        );
+        assert!(rendered.contains("pool_size: 6"), "got: {rendered}");
+    }
+
+    #[test]
+    fn debug_renders_absent_password_as_none() {
+        let config = CacheConfig {
+            url: "redis://127.0.0.1:6379".to_string(),
+            pool_size: 2,
+            ca_cert_path: Some("/etc/ssl/ca.pem".to_string()),
+            password: None,
+        };
+
+        let rendered = format!("{config:?}");
+
+        assert!(
+            rendered.contains("password: None"),
+            "an absent password should render as None, got: {rendered}"
+        );
+        // A credential-free URL and the CA path are not secrets: keep them.
+        assert!(
+            rendered.contains("redis://127.0.0.1:6379"),
+            "got: {rendered}"
+        );
+        assert!(rendered.contains("/etc/ssl/ca.pem"), "got: {rendered}");
+    }
+
+    #[test]
+    fn debug_redacts_url_whose_password_contains_a_raw_question_mark() {
+        // The pathological form: the '?' inside the password precedes the
+        // real '@', so the userinfo boundary can't be located. `redact_url`
+        // must bail out to a fully redacted value rather than print a prefix
+        // of the password (e.g. "redis://:pa").
+        let config = CacheConfig {
+            url: "redis://:pa?ss#word/x+y=z@127.0.0.1:6379".to_string(),
+            pool_size: 1,
+            ca_cert_path: None,
+            password: None,
+        };
+
+        let rendered = format!("{config:?}");
+
+        // Note: assert on distinctive password substrings only — the field
+        // name "password" itself contains e.g. "pa".
+        for leak in ["pa?ss", "#word", "x+y=z", "pa?"] {
+            assert!(
+                !rendered.contains(leak),
+                "Debug must not leak any part of an unparseable password \
+                 (found {leak:?}), got: {rendered}"
+            );
+        }
+        assert!(rendered.contains("<redacted>"), "got: {rendered}");
     }
 }
