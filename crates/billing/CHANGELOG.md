@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-billing` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.4] - 2026-07-15
+
 ## [0.5.3] - 2026-07-13
 
 ## [0.5.2] - 2026-07-07

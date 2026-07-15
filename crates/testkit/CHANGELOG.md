@@ -4,6 +4,20 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.0] - 2026-07-15
+
+### Features
+
+- feat(cache): VALKEY_PASSWORD + URL robuste aux mots de passe non-URL-safe (#148)
+- feat(cache): support TLS client (rustls) avec vérification CA (#147)
+- feat(cache): helper SWR stale-while-revalidate + single-flight (#146)
+
+### Bug Fixes
+
+- fix(deps): update rust crate prometheus to 0.14 (#145)
+- fix(telemetry): mark gather() #[must_use] (#144)
+- fix(telemetry): document serve() error contract (re-release 0.7.x — 0.7.0 tagged but not published to kellnr) (#142)
+
 ## [0.6.0] - 2026-07-13
 
 ### Features

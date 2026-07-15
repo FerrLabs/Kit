@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-middleware` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.8] - 2026-07-15
+
 ## [0.3.7] - 2026-07-13
 
 ## [0.3.6] - 2026-07-13
