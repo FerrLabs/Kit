@@ -19,9 +19,31 @@ pub struct CacheConfig {
     /// certificate when `url` uses the `rediss://` scheme. Ignored for
     /// plaintext `redis://` connections.
     pub ca_cert_path: Option<String>,
+    /// The Valkey/Redis AUTH password, kept out of `url` entirely.
+    ///
+    /// This is the **recommended** way to supply a password: `url` becomes
+    /// credential-free (e.g. `rediss://host:6379`) and never ends up in
+    /// logs, error messages, or metrics that capture the connection string.
+    /// When set, it takes priority over any credentials embedded in `url`.
+    ///
+    /// The URL-with-credentials form (`redis://:<password>@host:port`,
+    /// percent-encoded by [`connect`]) remains supported for backward
+    /// compatibility, but it cannot represent a password containing a raw
+    /// `?` or `#`: those characters make the URL's authority/query/fragment
+    /// boundary structurally ambiguous no matter how the userinfo is
+    /// encoded. A password with `?`/`#` in it must use `password` /
+    /// `VALKEY_PASSWORD`.
+    pub password: Option<String>,
 }
 
 impl CacheConfig {
+    /// Reads `VALKEY_URL`/`REDIS_URL`, `VALKEY_POOL_SIZE`, `VALKEY_CA_CERT`
+    /// and `VALKEY_PASSWORD` from the environment.
+    ///
+    /// `VALKEY_PASSWORD` is the recommended way to supply a password: set it
+    /// and use a credential-free `VALKEY_URL` (e.g. `rediss://host:6379`).
+    /// The legacy URL-with-credentials form is still read and supported (see
+    /// [`CacheConfig::password`] for why it can't handle every password).
     pub fn from_env() -> anyhow::Result<Self> {
         let url = std::env::var("VALKEY_URL")
             .or_else(|_| std::env::var("REDIS_URL"))
@@ -31,10 +53,14 @@ impl CacheConfig {
             .and_then(|v| v.parse().ok())
             .unwrap_or(6);
         let ca_cert_path = std::env::var("VALKEY_CA_CERT").ok();
+        let password = std::env::var("VALKEY_PASSWORD")
+            .ok()
+            .filter(|v| !v.is_empty());
         Ok(Self {
             url,
             pool_size,
             ca_cert_path,
+            password,
         })
     }
 }
@@ -138,6 +164,13 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
     let mut cfg = RedisConfig::from_url(&sanitized_url)
         .map_err(|e| anyhow::anyhow!("invalid VALKEY_URL: {e}"))?;
 
+    // `config.password` (typically from `VALKEY_PASSWORD`) is the robust
+    // path and takes priority over any credentials embedded in the URL —
+    // it's the only way to supply a password containing a raw `?`/`#`.
+    if let Some(password) = &config.password {
+        cfg.password = Some(password.clone());
+    }
+
     let tls_enabled = config.url.starts_with("rediss://");
     if tls_enabled {
         if let Some(ca_cert_path) = &config.ca_cert_path {
@@ -188,6 +221,7 @@ mod tests {
             url,
             pool_size: 2,
             ca_cert_path: Some(ca_cert_path),
+            password: None,
         })
         .await
         .expect("expected TLS connect with valid CA to succeed");
@@ -218,6 +252,7 @@ mod tests {
                 url,
                 pool_size: 1,
                 ca_cert_path: None,
+                password: None,
             }),
         )
         .await;
@@ -255,6 +290,7 @@ mod tests {
                 url,
                 pool_size: 1,
                 ca_cert_path: Some(wrong_ca),
+                password: None,
             }),
         )
         .await;
@@ -401,6 +437,7 @@ mod tests {
             url,
             pool_size: 2,
             ca_cert_path: None,
+            password: None,
         })
         .await
         .expect("connect with a raw URL-breaking password should succeed");
@@ -410,6 +447,186 @@ mod tests {
             .expect("SET should succeed once AUTH has decoded the real password");
         let value: String = pool
             .get("ferrlabs-cache:url-safe-pw-test")
+            .await
+            .expect("GET should succeed");
+        assert_eq!(value, "ok");
+    }
+
+    // -- VALKEY_PASSWORD: password supplied out-of-band, not in the URL --
+
+    /// Gate: run only when a local Valkey with a "normal" (URL-safe-once-
+    /// percent-encoded) password is available, reachable via a
+    /// credential-free URL.
+    ///
+    /// `TEST_VALKEY_PASSWORD_URL` — e.g. `redis://127.0.0.1:<port>` (NO
+    /// credentials in the URL).
+    /// `TEST_VALKEY_PASSWORD` — the AUTH password `requirepass` is set to on
+    /// that server.
+    fn password_env() -> Option<(String, String)> {
+        let url = std::env::var("TEST_VALKEY_PASSWORD_URL").ok()?;
+        let password = std::env::var("TEST_VALKEY_PASSWORD").ok()?;
+        Some((url, password))
+    }
+
+    #[tokio::test]
+    async fn connects_with_password_supplied_out_of_band() {
+        let Some((url, password)) = password_env() else {
+            eprintln!("skipping: TEST_VALKEY_PASSWORD_URL / TEST_VALKEY_PASSWORD not set");
+            return;
+        };
+
+        // The URL itself carries no credentials at all.
+        let pool = connect(&CacheConfig {
+            url,
+            pool_size: 2,
+            ca_cert_path: None,
+            password: Some(password),
+        })
+        .await
+        .expect("connect with password supplied via CacheConfig::password should succeed");
+
+        pool.set::<(), _, _>(
+            "ferrlabs-cache:password-field-test",
+            "ok",
+            None,
+            None,
+            false,
+        )
+        .await
+        .expect("SET should succeed once AUTH has used the out-of-band password");
+        let value: String = pool
+            .get("ferrlabs-cache:password-field-test")
+            .await
+            .expect("GET should succeed");
+        assert_eq!(value, "ok");
+    }
+
+    /// Gate: run only when a local Valkey whose password contains a raw `?`
+    /// and `#` is available — the case the URL-with-credentials form cannot
+    /// represent no matter how the userinfo is percent-encoded, because `?`
+    /// and `#` are the URL's own query/fragment delimiters and the ambiguity
+    /// is structural, not an encoding bug.
+    ///
+    /// `TEST_VALKEY_UNENCODABLE_PASSWORD_URL` — e.g. `redis://127.0.0.1:<port>`
+    /// (NO credentials in the URL).
+    /// `TEST_VALKEY_UNENCODABLE_PASSWORD` — the raw password, containing `?`
+    /// and `#` (e.g. `pa?ss#word/x+y=z`).
+    fn unencodable_password_env() -> Option<(String, String)> {
+        let url = std::env::var("TEST_VALKEY_UNENCODABLE_PASSWORD_URL").ok()?;
+        let password = std::env::var("TEST_VALKEY_UNENCODABLE_PASSWORD").ok()?;
+        Some((url, password))
+    }
+
+    #[tokio::test]
+    async fn url_with_credentials_cannot_represent_a_password_containing_question_mark_or_hash() {
+        // This is the negative half of the proof: demonstrate that the
+        // existing (and still supported) URL-with-credentials path, even
+        // with percent-encoding of the userinfo, cannot get a raw `?`/`#`
+        // password to the server correctly. `percent_encode_userinfo`
+        // bounds its '@' search to *before* the first raw '?'/'#' in the
+        // URL, so a raw '?' or '#' inside the still-unencoded password is
+        // indistinguishable from the start of the URL's own query/fragment:
+        // the authority is truncated there, and the "password" the server
+        // receives is wrong (truncated) — proving VALKEY_PASSWORD is not
+        // redundant with the existing percent-encoding fix.
+        let Some((url, password)) = unencodable_password_env() else {
+            eprintln!(
+                "skipping: TEST_VALKEY_UNENCODABLE_PASSWORD_URL / TEST_VALKEY_UNENCODABLE_PASSWORD not set"
+            );
+            return;
+        };
+
+        // Build the raw URL-with-credentials form a naive caller might try,
+        // exactly like Vault template rendering would (no pre-encoding).
+        let scheme_end = url.find("://").expect("test URL must have a scheme");
+        let (scheme, authority) = url.split_at(scheme_end + 3);
+        let raw_url_with_creds = format!("{scheme}:{password}@{authority}");
+
+        let result = connect(&CacheConfig {
+            url: raw_url_with_creds,
+            pool_size: 1,
+            ca_cert_path: None,
+            password: None,
+        })
+        .await;
+        assert!(
+            result.is_err(),
+            "a raw '?'/'#'-containing password embedded in the URL must not \
+             produce a working connection — this is exactly why VALKEY_PASSWORD exists"
+        );
+    }
+
+    #[tokio::test]
+    async fn valkey_password_handles_a_password_containing_question_mark_or_hash() {
+        // The positive half: the same raw password, supplied out-of-band via
+        // `CacheConfig::password` against a credential-free URL, connects
+        // successfully. This is the feature's whole reason to exist.
+        let Some((url, password)) = unencodable_password_env() else {
+            eprintln!(
+                "skipping: TEST_VALKEY_UNENCODABLE_PASSWORD_URL / TEST_VALKEY_UNENCODABLE_PASSWORD not set"
+            );
+            return;
+        };
+
+        let pool = connect(&CacheConfig {
+            url,
+            pool_size: 2,
+            ca_cert_path: None,
+            password: Some(password),
+        })
+        .await
+        .expect("a password containing '?'/'#' supplied via VALKEY_PASSWORD should connect fine");
+
+        pool.set::<(), _, _>(
+            "ferrlabs-cache:unencodable-password-test",
+            "ok",
+            None,
+            None,
+            false,
+        )
+        .await
+        .expect("SET should succeed");
+        let value: String = pool
+            .get("ferrlabs-cache:unencodable-password-test")
+            .await
+            .expect("GET should succeed");
+        assert_eq!(value, "ok");
+    }
+
+    #[tokio::test]
+    async fn config_password_takes_priority_over_url_credentials() {
+        // If both are present, `password` wins: an intentionally wrong
+        // password in the URL must not prevent a successful connection when
+        // the correct password is supplied via `CacheConfig::password`.
+        let Some((url, password)) = password_env() else {
+            eprintln!("skipping: TEST_VALKEY_PASSWORD_URL / TEST_VALKEY_PASSWORD not set");
+            return;
+        };
+
+        let scheme_end = url.find("://").expect("test URL must have a scheme");
+        let (scheme, authority) = url.split_at(scheme_end + 3);
+        let url_with_wrong_creds = format!("{scheme}:not-the-real-password@{authority}");
+
+        let pool = connect(&CacheConfig {
+            url: url_with_wrong_creds,
+            pool_size: 2,
+            ca_cert_path: None,
+            password: Some(password),
+        })
+        .await
+        .expect("CacheConfig::password must take priority over URL credentials");
+
+        pool.set::<(), _, _>(
+            "ferrlabs-cache:password-priority-test",
+            "ok",
+            None,
+            None,
+            false,
+        )
+        .await
+        .expect("SET should succeed using the out-of-band password");
+        let value: String = pool
+            .get("ferrlabs-cache:password-priority-test")
             .await
             .expect("GET should succeed");
         assert_eq!(value, "ok");
