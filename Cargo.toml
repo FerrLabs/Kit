@@ -56,7 +56,7 @@ tokio = { version = "1", features = ["full"] }
 # DB
 sqlx = { version = "0.9", features = ["runtime-tokio", "tls-rustls", "postgres", "chrono", "uuid", "json"] }
 
-fred = { version = "9" }
+fred = { version = "10" }
 
 # Crypto
 aes-gcm = "0.11"
