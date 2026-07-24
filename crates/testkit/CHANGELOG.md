@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.8.0] - 2026-07-24
+
+### Features
+
+- feat(ci): dispatch Renovate when the rebase box is ticked (#149)
+
+### Bug Fixes
+
+- fix(ci): repair renovate-rebase.yml truncated by the pin sweep (#168)
+
 ## [0.7.0] - 2026-07-15
 
 ### Features
