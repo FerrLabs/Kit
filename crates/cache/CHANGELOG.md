@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-cache` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-07-25
+
+### Features
+
+- feat(ci): dispatch Renovate when the rebase box is ticked (#149)
+
+### Bug Fixes
+
+- fix(ci): repair renovate-rebase.yml truncated by the pin sweep (#168)
+
 ## [0.5.0] - 2026-07-15
 
 ### Features
