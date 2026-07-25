@@ -119,7 +119,7 @@ impl CacheConfig {
     }
 }
 
-pub type CachePool = RedisPool;
+pub type CachePool = Pool;
 
 /// Percent-encode the `user`/`password` portion of a `redis://`/`rediss://`
 /// URL's userinfo so that URL-breaking characters (`/`, `+`, `=`, `@`, `:`,
@@ -215,8 +215,8 @@ fn rustls_config_with_ca(ca_cert_path: &str) -> anyhow::Result<fred::rustls::Cli
 
 pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
     let sanitized_url = percent_encode_userinfo(&config.url);
-    let mut cfg = RedisConfig::from_url(&sanitized_url)
-        .map_err(|e| anyhow::anyhow!("invalid VALKEY_URL: {e}"))?;
+    let mut cfg =
+        Config::from_url(&sanitized_url).map_err(|e| anyhow::anyhow!("invalid VALKEY_URL: {e}"))?;
 
     // `config.password` (typically from `VALKEY_PASSWORD`) is the robust
     // path and takes priority over any credentials embedded in the URL —
@@ -231,11 +231,11 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
             let client_config = rustls_config_with_ca(ca_cert_path)?;
             cfg.tls = Some(client_config.into());
         }
-        // else: keep whatever `RedisConfig::from_url` derived (system roots
+        // else: keep whatever `Config::from_url` derived (system roots
         // via `TlsConnector::default_rustls()`), still with full verification.
     }
 
-    let pool = RedisPool::new(cfg, None, None, None, config.pool_size)
+    let pool = Pool::new(cfg, None, None, None, config.pool_size)
         .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))?;
     let _handle = pool.connect();
     pool.wait_for_connect()
@@ -423,7 +423,7 @@ mod tests {
         assert_eq!(sanitized, "redis://:pw@127.0.0.1:6379/0?note=a@b");
 
         // And the host actually survives a real parse.
-        let parsed = RedisConfig::from_url(&sanitized).expect("should parse");
+        let parsed = Config::from_url(&sanitized).expect("should parse");
         let host = &parsed.server.hosts()[0];
         assert_eq!(&*host.host, "127.0.0.1");
         assert_eq!(host.port, 6379);
@@ -441,7 +441,7 @@ mod tests {
             "redis://:ab%2Fcd%2Bef%3Dgh@127.0.0.1:6379/0?note=a@b"
         );
 
-        let parsed = RedisConfig::from_url(&sanitized).expect("should parse");
+        let parsed = Config::from_url(&sanitized).expect("should parse");
         let host = &parsed.server.hosts()[0];
         assert_eq!(&*host.host, "127.0.0.1");
         assert_eq!(host.port, 6379);
@@ -485,7 +485,7 @@ mod tests {
         // Before the fix this failed with `invalid VALKEY_URL: Url Error:
         // EmptyHost`, because the raw '/' in the password terminated the
         // authority early. The fix pre-encodes the userinfo before handing
-        // the URL to `RedisConfig::from_url`, and `fred`/`url` decode it
+        // the URL to `Config::from_url`, and `fred`/`url` decode it
         // back to the raw password for the actual AUTH handshake.
         let pool = connect(&CacheConfig {
             url,
@@ -584,7 +584,7 @@ mod tests {
         //      that '?' sits *inside* the still-unencoded password, so no '@'
         //      is found within the bound and the URL is returned UNCHANGED
         //      (no encoding applied at all).
-        //   2. `RedisConfig::from_url` then parses that raw URL, reads the
+        //   2. `Config::from_url` then parses that raw URL, reads the
         //      authority as ending at the '?', finds no host, and rejects it
         //      with `Url Error: EmptyHost` — surfaced as `invalid VALKEY_URL`.
         //
