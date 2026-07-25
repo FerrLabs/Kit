@@ -54,7 +54,7 @@ impl Swr<'_> {
         let px = self.lock_ttl.as_millis() as i64;
         match self
             .pool
-            .set::<fred::types::RedisValue, _, _>(
+            .set::<fred::types::Value, _, _>(
                 lock_key,
                 "1",
                 Some(Expiration::PX(px)),
@@ -175,7 +175,7 @@ fn spawn_refresh<T, F, Fut>(
         #[allow(clippy::cast_possible_truncation)]
         let px = lock_ttl.as_millis() as i64;
         let got = matches!(
-            pool.set::<fred::types::RedisValue, _, _>(
+            pool.set::<fred::types::Value, _, _>(
                 &lock_key,
                 "1",
                 Some(Expiration::PX(px)),
