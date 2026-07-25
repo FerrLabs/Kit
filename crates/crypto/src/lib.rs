@@ -71,8 +71,8 @@ pub fn decrypt_value(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Er
         .map_err(|_| anyhow::anyhow!("DEK must be 32 bytes, got {}", dek.len()))?;
     let cipher = Aes256Gcm::new(&key);
 
-    let nonce = Nonce::try_from(&encrypted[..NONCE_SIZE])
-        .map_err(|_| anyhow::anyhow!("invalid nonce"))?;
+    let nonce =
+        Nonce::try_from(&encrypted[..NONCE_SIZE]).map_err(|_| anyhow::anyhow!("invalid nonce"))?;
     let ciphertext = &encrypted[NONCE_SIZE..];
 
     cipher
