@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.9.1] - 2026-07-25
+
+### Bug Fixes
+
+- fix(deps): update rust crate jsonwebtoken to v11 (#170)
+
 ## [0.9.0] - 2026-07-24
 
 ### Features

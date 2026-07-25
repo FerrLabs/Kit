@@ -4,6 +4,24 @@ All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-07-25
+
+### Features
+
+- feat(ci): dispatch Renovate when the rebase box is ticked (#149)
+- feat(cache): VALKEY_PASSWORD + URL robuste aux mots de passe non-URL-safe (#148)
+- feat(cache): support TLS client (rustls) avec vérification CA (#147)
+- feat(cache): helper SWR stale-while-revalidate + single-flight (#146)
+- feat(telemetry): Prometheus HTTP metrics middleware + /metrics server (Kit#4) (#141)
+
+### Bug Fixes
+
+- fix(deps): update rust crate jsonwebtoken to v11 (#170)
+- fix(ci): repair renovate-rebase.yml truncated by the pin sweep (#168)
+- fix(deps): update rust crate prometheus to 0.14 (#145)
+- fix(telemetry): mark gather() #[must_use] (#144)
+- fix(telemetry): document serve() error contract (re-release 0.7.x — 0.7.0 tagged but not published to kellnr) (#142)
+
 ## [0.4.0] - 2026-07-12
 
 ### Breaking Changes
