@@ -1215,7 +1215,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1249,7 +1249,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "0.5.4"
+version = "0.5.5"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1283,7 +1283,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1302,7 +1302,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1314,7 +1314,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "anyhow",
  "axum",
@@ -1436,7 +1436,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "sqlx",
@@ -1447,7 +1447,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "0.4.6"
+version = "0.4.7"
 dependencies = [
  "chrono",
  "serde",
@@ -2487,9 +2487,9 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "10.4.0"
+version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eba32bfb4ffdeaca3e34431072faf01745c9b26d25504aa7a6cf5684334fc4fc"
+checksum = "881733cbc631fc9e472e24447ce32a64bedf2da498d6d8570b08edc87de71f65"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek 2.2.0",
