@@ -11,6 +11,7 @@ description = "Envelope encryption + GCP Cloud KMS integration for FerrLabs back
 [dependencies]
 ferrlabs-errors = { workspace = true }
 aes-gcm = { workspace = true }
+rand = { workspace = true, features = ["sys_rng"] }
 async-trait = "0.1"
 tokio = { workspace = true }
 anyhow = { workspace = true }

@@ -20,15 +20,20 @@ use std::time::{Duration, Instant};
 
 use aes_gcm::{
     Aes256Gcm, Key, Nonce,
-    aead::{Aead, KeyInit, rand_core::RngCore},
+    aead::{Aead, KeyInit},
 };
 use async_trait::async_trait;
+use rand::rand_core::UnwrapErr;
+use rand::{Rng, rngs::SysRng};
 use tokio::sync::Mutex;
 
 const NONCE_SIZE: usize = 12;
 
-fn rng() -> impl RngCore {
-    aes_gcm::aead::OsRng
+/// OS entropy source. `UnwrapErr` turns the fallible `SysRng` into an
+/// infallible `Rng` that panics if the OS RNG fails — the same behaviour the
+/// pre-0.11 `aead::OsRng` had.
+fn rng() -> impl Rng {
+    UnwrapErr(SysRng)
 }
 
 #[must_use]
@@ -39,15 +44,16 @@ pub fn generate_dek() -> Vec<u8> {
 }
 
 pub fn encrypt_value(plaintext: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
-    let key = Key::<Aes256Gcm>::from_slice(dek);
-    let cipher = Aes256Gcm::new(key);
+    let key = Key::<Aes256Gcm>::try_from(dek)
+        .map_err(|_| anyhow::anyhow!("DEK must be 32 bytes, got {}", dek.len()))?;
+    let cipher = Aes256Gcm::new(&key);
 
     let mut nonce_bytes = [0u8; NONCE_SIZE];
     rng().fill_bytes(&mut nonce_bytes);
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let nonce = Nonce::from(nonce_bytes);
 
     let ciphertext = cipher
-        .encrypt(nonce, plaintext)
+        .encrypt(&nonce, plaintext)
         .map_err(|e| anyhow::anyhow!("encryption failed: {e}"))?;
 
     let mut result = Vec::with_capacity(NONCE_SIZE + ciphertext.len());
@@ -61,14 +67,16 @@ pub fn decrypt_value(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Er
         return Err(anyhow::anyhow!("ciphertext too short"));
     }
 
-    let key = Key::<Aes256Gcm>::from_slice(dek);
-    let cipher = Aes256Gcm::new(key);
+    let key = Key::<Aes256Gcm>::try_from(dek)
+        .map_err(|_| anyhow::anyhow!("DEK must be 32 bytes, got {}", dek.len()))?;
+    let cipher = Aes256Gcm::new(&key);
 
-    let nonce = Nonce::from_slice(&encrypted[..NONCE_SIZE]);
+    let nonce =
+        Nonce::try_from(&encrypted[..NONCE_SIZE]).map_err(|_| anyhow::anyhow!("invalid nonce"))?;
     let ciphertext = &encrypted[NONCE_SIZE..];
 
     cipher
-        .decrypt(nonce, ciphertext)
+        .decrypt(&nonce, ciphertext)
         .map_err(|e| anyhow::anyhow!("decryption failed: {e}"))
 }
 
