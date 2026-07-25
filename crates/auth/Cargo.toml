@@ -30,7 +30,7 @@ sqlx = { workspace = true }
 reqwest = { workspace = true }
 url = { workspace = true }
 async-trait = "0.1"
-jsonwebtoken = { version = "10", default-features = false, features = ["rust_crypto", "use_pem"] }
+jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto", "use_pem"] }
 totp-rs = { version = "5", default-features = false, features = ["otpauth"] }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
