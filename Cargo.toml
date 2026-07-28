@@ -73,7 +73,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 opentelemetry = "0.32"
 
 # Validation
-validator = "0.20"
+validator = "0.21"
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 
 # Concurrency / timing-safe compare
