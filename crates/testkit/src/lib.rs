@@ -27,6 +27,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
 use uuid::Uuid;
 
 use anyhow::{Context, Result};
@@ -37,6 +38,10 @@ use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
 
 static DB_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// Plafond du nettoyage au `Drop`. Volontairement court : la suppression est
+/// un confort, le GC horaire de `postgres-ci` est la vraie garantie.
+const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub struct TestDb {
     pub pool: PgPool,
@@ -53,7 +58,10 @@ impl TestDb {
     /// uniquely-named ephemeral database on it — no container runtime needed,
     /// so this works on self-hosted CI runners without Docker. Point it at a
     /// disposable Postgres (e.g. one started for the CI job); the per-run
-    /// database is dropped on teardown. Otherwise it falls back to a
+    /// database is dropped on teardown on a **best-effort** basis — see the
+    /// `Drop` impl: failures are ignored, destructors do not run on `SIGKILL`,
+    /// and `WITH (FORCE)` needs Postgres 13+. Treat the hourly GC on the CI
+    /// server as the actual guarantee. Otherwise it falls back to a
     /// Postgres testcontainer (local dev / Docker-capable CI).
     pub async fn fresh() -> Result<Self> {
         match std::env::var("TEST_DATABASE_URL") {
@@ -137,22 +145,6 @@ impl TestDb {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    #[ignore = "requires docker; run with `cargo test -p ferrlabs-testkit -- --ignored`"]
-    async fn fresh_db_executes_select_one() {
-        let db = TestDb::fresh().await.expect("spin up test db");
-        let row: (i32,) = sqlx::query_as("SELECT 1")
-            .fetch_one(&db.pool)
-            .await
-            .expect("select 1");
-        assert_eq!(row.0, 1);
-    }
-}
-
 impl Drop for TestDb {
     /// Supprime la base ephemere creee par `fresh_external`.
     ///
@@ -181,21 +173,95 @@ impl Drop for TestDb {
             else {
                 return;
             };
+            // Borne dure : on `join()` ce thread, donc sans timeout une
+            // connexion qui pend (DNS, reseau, serveur disparu) figerait la fin
+            // des tests. Best-effort veut dire qu'on abandonne en silence.
             rt.block_on(async move {
-                if let Ok(pool) = PgPoolOptions::new()
-                    .max_connections(1)
-                    .connect_with(admin)
-                    .await
-                {
-                    let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
-                        "DROP DATABASE IF EXISTS \"{db_name}\" WITH (FORCE)"
-                    )))
-                    .execute(&pool)
-                    .await;
-                    pool.close().await;
-                }
+                let _ = tokio::time::timeout(CLEANUP_TIMEOUT, async move {
+                    if let Ok(pool) = PgPoolOptions::new()
+                        .max_connections(1)
+                        .acquire_timeout(CLEANUP_TIMEOUT)
+                        .connect_with(admin)
+                        .await
+                    {
+                        let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
+                            "DROP DATABASE IF EXISTS \"{db_name}\" WITH (FORCE)"
+                        )))
+                        .execute(&pool)
+                        .await;
+                        pool.close().await;
+                    }
+                })
+                .await;
             });
         })
         .join();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    #[ignore = "requires docker; run with `cargo test -p ferrlabs-testkit -- --ignored`"]
+    async fn fresh_db_executes_select_one() {
+        let db = TestDb::fresh().await.expect("spin up test db");
+        let row: (i32,) = sqlx::query_as("SELECT 1")
+            .fetch_one(&db.pool)
+            .await
+            .expect("select 1");
+        assert_eq!(row.0, 1);
+    }
+
+    /// Couvre le chemin `fresh_external` — celui qu'utilise la CI — et surtout
+    /// le nettoyage au `Drop`, qui est l'objet du correctif.
+    ///
+    /// Necessite un Postgres jetable accessible via `TEST_DATABASE_URL` :
+    ///   docker run --rm -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:17-alpine
+    ///   TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres \
+    ///     cargo test -p ferrlabs-testkit -- --ignored external
+    #[tokio::test]
+    #[ignore = "requires TEST_DATABASE_URL pointing at a disposable Postgres"]
+    async fn external_db_is_dropped_on_teardown() {
+        let base = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL");
+
+        let admin_pool = PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&base)
+            .await
+            .expect("connect to admin db");
+
+        let count = |pool: PgPool| async move {
+            let (n,): (i64,) =
+                sqlx::query_as("SELECT count(*) FROM pg_database WHERE datname LIKE 'testkit\\_%'")
+                    .fetch_one(&pool)
+                    .await
+                    .expect("count testkit databases");
+            n
+        };
+
+        let before = count(admin_pool.clone()).await;
+
+        {
+            let db = TestDb::fresh_external(&base).await.expect("fresh external");
+            let row: (i32,) = sqlx::query_as("SELECT 1")
+                .fetch_one(&db.pool)
+                .await
+                .expect("select 1");
+            assert_eq!(row.0, 1);
+            assert_eq!(
+                count(admin_pool.clone()).await,
+                before + 1,
+                "la base ephemere doit exister pendant le test"
+            );
+        } // <- Drop ici : la base doit disparaitre
+
+        assert_eq!(
+            count(admin_pool.clone()).await,
+            before,
+            "la base ephemere doit etre supprimee au Drop"
+        );
+        admin_pool.close().await;
     }
 }
