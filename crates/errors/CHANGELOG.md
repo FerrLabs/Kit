@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-errors` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.9.2] - 2026-08-01
+
+### Bug Fixes
+
+- fix(testkit): rend les bases de test uniques et les supprime (#178)
+
 ## [0.9.1] - 2026-07-25
 
 ### Bug Fixes

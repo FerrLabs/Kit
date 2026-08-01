@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-types` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.9] - 2026-08-01
+
 ## [0.4.8] - 2026-07-25
 
 ## [0.4.7] - 2026-07-24
