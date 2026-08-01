@@ -609,9 +609,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.6.4"
+version = "4.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d91e0c145792ef73a6ad36d27c75ac09f1832222a3c209689d90f534685ee5b7"
+checksum = "301b56658598e48f3648647ac6fc887be7e7108eddfa4e9b63fcf3ec58c0cadf"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -619,9 +619,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.6.2"
+version = "4.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f09628afdcc538b57f3c6341e9c8e9970f18e4a481690a64974d7023bd33548b"
+checksum = "94a65403d1a1bd28f7dc68eb8506e8874808ee5eecb59298de588e2e1407a078"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1172,7 +1172,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1223,7 +1223,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1257,7 +1257,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1277,7 +1277,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-cache"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "fred",
@@ -1291,7 +1291,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1311,7 +1311,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1323,7 +1323,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1358,7 +1358,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-license"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "chrono",
  "clap",
@@ -1371,7 +1371,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1421,7 +1421,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-telemetry"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1445,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "sqlx",
@@ -1457,7 +1457,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "chrono",
  "serde",
@@ -3223,7 +3223,7 @@ dependencies = [
  "once_cell",
  "socket2 0.6.5",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3553,7 +3553,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3654,7 +3654,7 @@ dependencies = [
  "security-framework 3.7.0",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5216,7 +5216,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
