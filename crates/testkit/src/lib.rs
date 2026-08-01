@@ -25,7 +25,9 @@
 
 use std::path::Path;
 use std::str::FromStr;
+
 use std::sync::atomic::{AtomicU64, Ordering};
+use uuid::Uuid;
 
 use anyhow::{Context, Result};
 use sqlx::PgPool;
@@ -39,6 +41,9 @@ static DB_SEQ: AtomicU64 = AtomicU64::new(0);
 pub struct TestDb {
     pub pool: PgPool,
     _container: Option<ContainerAsync<Postgres>>,
+    /// Options d'admin + nom de la base a supprimer au `Drop`.
+    /// `None` pour le mode testcontainer : le conteneur emporte tout avec lui.
+    cleanup: Option<(PgConnectOptions, String)>,
 }
 
 impl TestDb {
@@ -48,7 +53,7 @@ impl TestDb {
     /// uniquely-named ephemeral database on it — no container runtime needed,
     /// so this works on self-hosted CI runners without Docker. Point it at a
     /// disposable Postgres (e.g. one started for the CI job); the per-run
-    /// databases are not dropped on teardown. Otherwise it falls back to a
+    /// database is dropped on teardown. Otherwise it falls back to a
     /// Postgres testcontainer (local dev / Docker-capable CI).
     pub async fn fresh() -> Result<Self> {
         match std::env::var("TEST_DATABASE_URL") {
@@ -79,14 +84,21 @@ impl TestDb {
         Ok(Self {
             pool,
             _container: Some(container),
+            cleanup: None,
         })
     }
 
     async fn fresh_external(base: &str) -> Result<Self> {
         let admin = PgConnectOptions::from_str(base).context("parsing TEST_DATABASE_URL")?;
+        // Nom unique par APPEL, pas par processus. `std::process::id()` ne
+        // convient pas : chaque conteneur a son propre espace de noms PID, où
+        // les numeros repartent bas — deux runs CI tirent facilement le meme
+        // PID. Comme ces bases ne sont jamais supprimees (voir plus bas), une
+        // base d'un run precedent survit et le `CREATE DATABASE` echoue sur
+        // « database "testkit_<pid>_0" already exists ».
         let db_name = format!(
             "testkit_{}_{}",
-            std::process::id(),
+            &Uuid::new_v4().simple().to_string()[..12],
             DB_SEQ.fetch_add(1, Ordering::Relaxed)
         );
         let admin_pool = PgPoolOptions::new()
@@ -103,12 +115,13 @@ impl TestDb {
         admin_pool.close().await;
         let pool = PgPoolOptions::new()
             .max_connections(5)
-            .connect_with(admin.database(&db_name))
+            .connect_with(admin.clone().database(&db_name))
             .await
             .context("connecting to ephemeral test database")?;
         Ok(Self {
             pool,
             _container: None,
+            cleanup: Some((admin, db_name)),
         })
     }
 
@@ -137,5 +150,52 @@ mod tests {
             .await
             .expect("select 1");
         assert_eq!(row.0, 1);
+    }
+}
+
+impl Drop for TestDb {
+    /// Supprime la base ephemere creee par `fresh_external`.
+    ///
+    /// Sans cela les bases s'accumulent indefiniment sur le serveur partage :
+    /// le GC de `postgres-ci` ne purge que les bases `ci_*` creees par le
+    /// workflow, pas les `testkit_*` creees ici. C'est ce qui a fini par
+    /// provoquer des collisions de noms en CI.
+    ///
+    /// `Drop` est synchrone et rien ne garantit qu'un runtime Tokio soit encore
+    /// actif a cet instant : on en cree un dedie sur un thread a part. Le
+    /// `join()` attend la suppression, pour qu'elle ne soit pas perdue si le
+    /// processus se termine dans la foulee.
+    ///
+    /// `WITH (FORCE)` (Postgres 13+) ferme les connexions restantes : le pool
+    /// de `self` n'est ferme qu'apres ce `Drop`, la base serait sinon encore
+    /// consideree comme utilisee. Best-effort : une erreur ici ne doit jamais
+    /// faire echouer un test, le GC horaire reste le filet de securite.
+    fn drop(&mut self) {
+        let Some((admin, db_name)) = self.cleanup.take() else {
+            return;
+        };
+        let _ = std::thread::spawn(move || {
+            let Ok(rt) = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            else {
+                return;
+            };
+            rt.block_on(async move {
+                if let Ok(pool) = PgPoolOptions::new()
+                    .max_connections(1)
+                    .connect_with(admin)
+                    .await
+                {
+                    let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
+                        "DROP DATABASE IF EXISTS \"{db_name}\" WITH (FORCE)"
+                    )))
+                    .execute(&pool)
+                    .await;
+                    pool.close().await;
+                }
+            });
+        })
+        .join();
     }
 }
