@@ -1,7 +1,7 @@
 {
   "$schema": "https://ferrflow.com/schema/ferrflow.json",
   "workspace": {
-    "versioning": "zerover",
+    "versioning": "semver",
     "tagTemplate": "{name}@v{version}",
     "recoverMissedReleases": true,
     "deferPublish": true,

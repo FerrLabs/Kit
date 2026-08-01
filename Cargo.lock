@@ -1213,7 +1213,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-audit"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "ferrlabs-id",
@@ -1223,7 +1223,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "0.12.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1257,7 +1257,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "0.5.6"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1277,7 +1277,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-cache"
-version = "0.6.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "fred",
@@ -1291,7 +1291,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "0.4.7"
+version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1311,7 +1311,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "0.9.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1323,7 +1323,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "0.9.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1338,7 +1338,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-http"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "reqwest",
  "thiserror 2.0.19",
@@ -1348,7 +1348,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-id"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1358,7 +1358,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-license"
-version = "0.5.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "clap",
@@ -1371,7 +1371,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "0.3.10"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1387,7 +1387,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "ferrlabs-errors",
  "serde",
@@ -1397,7 +1397,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-queue"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1414,14 +1414,14 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-ratelimit"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "dashmap",
 ]
 
 [[package]]
 name = "ferrlabs-telemetry"
-version = "0.7.3"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1445,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "0.8.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "sqlx",
@@ -1457,7 +1457,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "0.4.8"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "serde",
@@ -1466,7 +1466,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-vault"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "reqwest",
@@ -1475,7 +1475,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-webhooks"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "dashmap",
  "hex",
