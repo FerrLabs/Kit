@@ -14,6 +14,10 @@ sqlx = { workspace = true }
 testcontainers = { workspace = true }
 testcontainers-modules = { workspace = true }
 tokio = { workspace = true }
+# Déclarée ICI et non ajoutée au Cargo.toml racine : `uuid` y figure déjà, et
+# toucher le manifeste du workspace republierait en cascade les crates qui le
+# listent dans leurs sharedPaths.
+uuid = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
