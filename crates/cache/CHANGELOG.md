@@ -4,6 +4,17 @@ All notable changes to `ferrlabs-cache` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-08-01
+
+### Breaking Changes
+
+- feat!: passe les crates en 1.0.0 et bascule en semver (#180)
+
+### Bug Fixes
+
+- fix(testkit): rend les bases de test uniques et les supprime (#178)
+- fix(deps): update rust crate jsonwebtoken to v11 (#170)
+
 ## [0.6.0] - 2026-07-25
 
 ### Features

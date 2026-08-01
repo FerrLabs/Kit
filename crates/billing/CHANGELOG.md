@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-billing` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-08-01
+
+### Breaking Changes
+
+- feat!: passe les crates en 1.0.0 et bascule en semver (#180)
+
 ## [0.5.7] - 2026-08-01
 
 ## [0.5.6] - 2026-07-25

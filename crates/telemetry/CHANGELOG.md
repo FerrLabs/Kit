@@ -4,6 +4,25 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-08-01
+
+### Breaking Changes
+
+- feat!: passe les crates en 1.0.0 et bascule en semver (#180)
+
+### Features
+
+- feat(ci): dispatch Renovate when the rebase box is ticked (#149)
+- feat(cache): VALKEY_PASSWORD + URL robuste aux mots de passe non-URL-safe (#148)
+- feat(cache): support TLS client (rustls) avec vérification CA (#147)
+- feat(cache): helper SWR stale-while-revalidate + single-flight (#146)
+
+### Bug Fixes
+
+- fix(testkit): rend les bases de test uniques et les supprime (#178)
+- fix(deps): update rust crate jsonwebtoken to v11 (#170)
+- fix(ci): repair renovate-rebase.yml truncated by the pin sweep (#168)
+
 ## [0.7.3] - 2026-07-13
 
 ### Bug Fixes
