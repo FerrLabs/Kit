@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/api-version",
     "crates/audit",
     "crates/auth",
     "crates/billing",
@@ -99,6 +100,7 @@ ferrlabs-license = { path = "crates/license", version = "1.0.0", registry = "kel
 ferrlabs-ratelimit = { path = "crates/ratelimit", version = "1.0.0", registry = "kellnr" }
 ferrlabs-webhooks = { path = "crates/webhooks", version = "1.0.0", registry = "kellnr" }
 ferrlabs-audit = { path = "crates/audit", version = "1.0.0", registry = "kellnr" }
+ferrlabs-api-version = { path = "crates/api-version", version = "0.1.0", registry = "kellnr" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

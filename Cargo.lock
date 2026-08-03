@@ -1211,6 +1211,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferrlabs-api-version"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "http 1.4.2",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "ferrlabs-audit"
 version = "1.0.0"
 dependencies = [
