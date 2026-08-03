@@ -390,8 +390,8 @@ mod tests {
         assert_eq!(q.get("client_id").unwrap(), "github-client-id");
         assert_eq!(q.get("scope").unwrap(), "read:user user:email");
         assert_eq!(q.get("state").unwrap(), &req.state);
-        assert!(q.get("code_challenge").is_none());
-        assert!(q.get("code_challenge_method").is_none());
+        assert!(!q.contains_key("code_challenge"));
+        assert!(!q.contains_key("code_challenge_method"));
         assert!(req.pkce_verifier.is_none());
     }
 
