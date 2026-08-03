@@ -10,7 +10,7 @@ on:
 jobs:
   ci:
     name: CI
-    uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@5d33e5b2108483ee8769a57b1105a612fd8a9e67 # main
+    uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@d3ce80b43af8b567b503ab4c3ee44d6e33c246f5 # main
     with:
       enable-sonar: true
       apt-packages: build-essential pkg-config libssl-dev
