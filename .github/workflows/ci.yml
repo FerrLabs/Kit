@@ -13,7 +13,6 @@ jobs:
     uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@d3ce80b43af8b567b503ab4c3ee44d6e33c246f5 # main
     with:
       enable-sonar: true
-      apt-packages: build-essential pkg-config libssl-dev
       cargo-flags: --workspace --all-features
       coverage-flags: --all-features
       clippy-args: -D warnings
