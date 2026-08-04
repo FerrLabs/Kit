@@ -6,7 +6,9 @@
     "recoverMissedReleases": true,
     "deferPublish": true,
     "registries": {
-      "kellnr": { "tokenEnv": "CARGO_REGISTRIES_KELLNR_TOKEN" }
+      "kellnr": {
+        "tokenEnv": "CARGO_REGISTRIES_KELLNR_TOKEN"
+      }
     }
   },
   "package": [
@@ -15,114 +17,283 @@
       "path": "crates/errors",
       "changelog": "crates/errors/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/errors/Cargo.toml", "format": "toml" },
-        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-errors = .*version = \"([^\"]+)\"" }
+        {
+          "path": "crates/errors/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-errors = .*version = \"([^\"]+)\""
+        }
       ],
-      "sharedPaths": ["Cargo.toml"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "sharedPaths": [
+        "Cargo.toml"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-types",
       "path": "crates/types",
       "changelog": "crates/types/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/types/Cargo.toml", "format": "toml" },
-        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-types = .*version = \"([^\"]+)\"" }
+        {
+          "path": "crates/types/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-types = .*version = \"([^\"]+)\""
+        }
       ],
-      "dependsOn": ["ferrlabs-errors"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-crypto",
       "path": "crates/crypto",
       "changelog": "crates/crypto/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/crypto/Cargo.toml", "format": "toml" },
-        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-crypto = .*version = \"([^\"]+)\"" }
+        {
+          "path": "crates/crypto/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-crypto = .*version = \"([^\"]+)\""
+        }
       ],
-      "dependsOn": ["ferrlabs-errors"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-db",
       "path": "crates/db",
       "changelog": "crates/db/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/db/Cargo.toml", "format": "toml" },
-        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-db = .*version = \"([^\"]+)\"" }
+        {
+          "path": "crates/db/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-db = .*version = \"([^\"]+)\""
+        }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"],
-      "sharedPaths": ["Cargo.toml"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors",
+        "ferrlabs-types"
+      ],
+      "sharedPaths": [
+        "Cargo.toml"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-cache",
       "path": "crates/cache",
       "changelog": "crates/cache/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/cache/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/cache/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-auth",
       "path": "crates/auth",
       "changelog": "crates/auth/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/auth/Cargo.toml", "format": "toml" },
-        { "path": "Cargo.toml", "format": "txt", "selector": "(?m)^ferrlabs-auth = .*version = \"([^\"]+)\"" }
+        {
+          "path": "crates/auth/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-auth = .*version = \"([^\"]+)\""
+        }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-crypto", "ferrlabs-db"],
-      "sharedPaths": ["Cargo.toml"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors",
+        "ferrlabs-types",
+        "ferrlabs-crypto",
+        "ferrlabs-db"
+      ],
+      "sharedPaths": [
+        "Cargo.toml"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-billing",
       "path": "crates/billing",
       "changelog": "crates/billing/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/billing/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/billing/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors",
+        "ferrlabs-types"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-middleware",
       "path": "crates/middleware",
       "changelog": "crates/middleware/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/middleware/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/middleware/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "dependsOn": ["ferrlabs-errors", "ferrlabs-types", "ferrlabs-auth"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "dependsOn": [
+        "ferrlabs-errors",
+        "ferrlabs-types",
+        "ferrlabs-auth"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-telemetry",
       "path": "crates/telemetry",
       "changelog": "crates/telemetry/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/telemetry/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/telemetry/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-license",
       "path": "crates/license",
       "changelog": "crates/license/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/license/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/license/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     },
     {
       "name": "ferrlabs-testkit",
       "path": "crates/testkit",
       "changelog": "crates/testkit/CHANGELOG.md",
       "versionedFiles": [
-        { "path": "crates/testkit/Cargo.toml", "format": "toml" }
+        {
+          "path": "crates/testkit/Cargo.toml",
+          "format": "toml"
+        }
       ],
-      "sharedPaths": ["Cargo.toml"],
-      "publishers": [{ "kind": "cargo", "registry": "kellnr", "noVerify": true }]
+      "sharedPaths": [
+        "Cargo.toml"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
+      "name": "ferrlabs-api-version",
+      "path": "crates/api-version",
+      "changelog": "crates/api-version/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/api-version/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-api-version = .*version = \"([^\"]+)\""
+        }
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
     }
   ]
 }
