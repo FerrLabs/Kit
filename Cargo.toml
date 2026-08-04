@@ -82,11 +82,11 @@ dashmap = "6"
 subtle = "2"
 
 # Internal crates
-ferrlabs-errors = { path = "crates/errors", version = "2.0.0", registry = "kellnr" }
-ferrlabs-types = { path = "crates/types", version = "2.0.0", registry = "kellnr" }
-ferrlabs-db = { path = "crates/db", version = "2.0.0", registry = "kellnr" }
-ferrlabs-crypto = { path = "crates/crypto", version = "2.0.0", registry = "kellnr" }
-ferrlabs-auth = { path = "crates/auth", version = "2.0.0", registry = "kellnr" }
+ferrlabs-errors = { path = "crates/errors", version = "2.1.0", registry = "kellnr" }
+ferrlabs-types = { path = "crates/types", version = "2.0.1", registry = "kellnr" }
+ferrlabs-db = { path = "crates/db", version = "2.1.0", registry = "kellnr" }
+ferrlabs-crypto = { path = "crates/crypto", version = "2.0.1", registry = "kellnr" }
+ferrlabs-auth = { path = "crates/auth", version = "2.1.0", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }
 ferrlabs-permissions = { path = "crates/permissions", version = "1.0.0", registry = "kellnr" }
@@ -100,7 +100,7 @@ ferrlabs-license = { path = "crates/license", version = "1.0.0", registry = "kel
 ferrlabs-ratelimit = { path = "crates/ratelimit", version = "1.0.0", registry = "kellnr" }
 ferrlabs-webhooks = { path = "crates/webhooks", version = "1.0.0", registry = "kellnr" }
 ferrlabs-audit = { path = "crates/audit", version = "1.0.0", registry = "kellnr" }
-ferrlabs-api-version = { path = "crates/api-version", version = "0.1.0", registry = "kellnr" }
+ferrlabs-api-version = { path = "crates/api-version", version = "1.0.0", registry = "kellnr" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
