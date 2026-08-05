@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] - 2026-08-05
+
+### Features
+
+- feat(testkit): golden-test harness for api-version transform chains (#189)
+
+### Bug Fixes
+
+- fix(release): valide l'ordre topologique de ferrflow.json en CI (#191)
+
 ## [2.1.1] - 2026-08-05
 
 ### Bug Fixes

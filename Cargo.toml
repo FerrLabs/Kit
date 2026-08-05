@@ -82,14 +82,14 @@ dashmap = "6"
 subtle = "2"
 
 # Internal crates
-ferrlabs-errors = { path = "crates/errors", version = "2.1.1", registry = "kellnr" }
-ferrlabs-types = { path = "crates/types", version = "2.0.2", registry = "kellnr" }
-ferrlabs-db = { path = "crates/db", version = "2.1.1", registry = "kellnr" }
-ferrlabs-crypto = { path = "crates/crypto", version = "2.0.2", registry = "kellnr" }
-ferrlabs-auth = { path = "crates/auth", version = "2.1.1", registry = "kellnr" }
+ferrlabs-errors = { path = "crates/errors", version = "2.2.0", registry = "kellnr" }
+ferrlabs-types = { path = "crates/types", version = "2.1.0", registry = "kellnr" }
+ferrlabs-db = { path = "crates/db", version = "2.2.0", registry = "kellnr" }
+ferrlabs-crypto = { path = "crates/crypto", version = "2.1.0", registry = "kellnr" }
+ferrlabs-auth = { path = "crates/auth", version = "2.2.0", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }
-ferrlabs-permissions = { path = "crates/permissions", version = "2.0.1", registry = "kellnr" }
+ferrlabs-permissions = { path = "crates/permissions", version = "2.1.0", registry = "kellnr" }
 ferrlabs-queue = { path = "crates/queue", version = "2.1.0", registry = "kellnr" }
 ferrlabs-telemetry = { path = "crates/telemetry", version = "1.0.0", registry = "kellnr" }
 ferrlabs-vault = { path = "crates/vault", version = "2.0.0", registry = "kellnr" }
