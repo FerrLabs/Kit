@@ -376,9 +376,9 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "base64"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b25655df2c3cdd83c5e5b293b88acd880332b2ddadd7c30ac43144fdc0033da9"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
 name = "base64ct"
@@ -1234,13 +1234,13 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "argon2",
  "async-trait",
  "axum",
- "base64 0.23.0",
+ "base64 0.23.1",
  "chrono",
  "ed25519-dalek 3.0.0",
  "ferrlabs-crypto",
@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.0.2"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1302,12 +1302,12 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "2.0.2"
+version = "2.1.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
  "async-trait",
- "base64 0.23.0",
+ "base64 0.23.1",
  "ferrlabs-errors",
  "gcp_auth",
  "hex",
@@ -1322,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1334,7 +1334,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1382,7 +1382,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "2.0.2"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1398,7 +1398,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "ferrlabs-errors",
  "serde",
@@ -1408,7 +1408,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-queue"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1457,7 +1457,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "2.1.1"
+version = "2.2.1"
 dependencies = [
  "anyhow",
  "ferrlabs-api-version",
@@ -1472,7 +1472,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.0.2"
+version = "2.1.0"
 dependencies = [
  "chrono",
  "serde",
