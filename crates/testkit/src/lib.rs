@@ -23,6 +23,9 @@
 //! It is `#[ignore]` so a default `cargo test --workspace` succeeds on
 //! machines without Docker.
 
+#[cfg(feature = "api-version-golden")]
+pub mod api_version_golden;
+
 use std::path::Path;
 use std::str::FromStr;
 

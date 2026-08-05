@@ -18,6 +18,12 @@ tokio = { workspace = true }
 # toucher le manifeste du workspace republierait en cascade les crates qui le
 # listent dans leurs sharedPaths.
 uuid = { workspace = true }
+# Toutes trois déjà présentes dans workspace.dependencies (racine) pour
+# ferrlabs-api-version elle-même ; on les référence ici sans toucher au
+# Cargo.toml racine.
+ferrlabs-api-version = { workspace = true, optional = true }
+http = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
@@ -25,3 +31,8 @@ tokio = { workspace = true }
 [features]
 default = []
 integration = []
+# Golden-test harness for products built on ferrlabs-api-version: renders each
+# route's response at every still-served contract version and diffs it
+# against a stored fixture, so a broken transform chain fails CI instead of
+# shipping quietly.
+api-version-golden = ["dep:ferrlabs-api-version", "dep:http", "dep:serde_json"]
