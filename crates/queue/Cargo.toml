@@ -27,12 +27,20 @@ tokio = { workspace = true }
 async-trait = "0.1"
 serde = { workspace = true }
 uuid = { workspace = true }
-# Not `{ workspace = true }`: the root `[workspace.dependencies]` entry is
-# pinned to `1.0.0` while `crates/testkit` is locally at `2.1.1`, so the
-# workspace alias fails to resolve. Root `Cargo.toml` is off-limits here
-# (touching it republishes ~9 crates via `sharedPaths`), so this crate
-# points at the path directly instead.
-ferrlabs-testkit = { path = "../testkit", version = "2.1.1" }
+# Chemin SANS `version`, et c'est délibéré : cargo retire complètement les
+# dépendances de dev qui n'ont qu'un `path` au moment de `cargo publish`.
+# Elles ne font pas partie du contrat publié — un consommateur de
+# `ferrlabs-queue` ne compile jamais ses tests.
+#
+# Avec un `version`, la dépendance entre dans le manifeste publié et exige que
+# le registre porte déjà cette version : la release du 2026-08-05 a échoué là,
+# `ferrlabs-testkit` venant d'être publiée quelques secondes plus tôt dans le
+# même lot, sans que l'index Kellnr ait suivi.
+#
+# `{ workspace = true }` n'est pas une option : l'entrée du `Cargo.toml` racine
+# est restée épinglée à `1.0.0` alors que la crate est en 2.2.1, et toucher ce
+# fichier republierait une dizaine de crates via `sharedPaths`.
+ferrlabs-testkit = { path = "../testkit" }
 
 [features]
 # Gates the Postgres-backed integration tests under tests/. Off by default
