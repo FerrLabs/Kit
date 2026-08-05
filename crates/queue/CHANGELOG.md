@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-queue` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] - 2026-08-05
+
+### Features
+
+- feat(testkit): golden-test harness for api-version transform chains (#189)
+
+### Bug Fixes
+
+- fix(release): publie ferrlabs-id avant ferrlabs-audit qui en dépend (#188)
+
 ## [2.0.0] - 2026-08-05
 
 ### Breaking Changes

@@ -90,7 +90,7 @@ ferrlabs-auth = { path = "crates/auth", version = "2.1.1", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }
 ferrlabs-permissions = { path = "crates/permissions", version = "2.0.1", registry = "kellnr" }
-ferrlabs-queue = { path = "crates/queue", version = "2.0.0", registry = "kellnr" }
+ferrlabs-queue = { path = "crates/queue", version = "2.1.0", registry = "kellnr" }
 ferrlabs-telemetry = { path = "crates/telemetry", version = "1.0.0", registry = "kellnr" }
 ferrlabs-vault = { path = "crates/vault", version = "2.0.0", registry = "kellnr" }
 ferrlabs-http = { path = "crates/http", version = "2.0.0", registry = "kellnr" }
