@@ -25,7 +25,10 @@ def internal_deps(crate_dir: pathlib.Path) -> set[str]:
     manifest = crate_dir / "Cargo.toml"
     if not manifest.is_file():
         return set()
-    names = set(re.findall(r"^(ferrlabs-[a-z-]+)\s*=", manifest.read_text(), re.M))
+    # `[a-z0-9-]` et non `[a-z-]` : un nom contenant un chiffre serait sinon
+    # ignoré en silence, donc l'arête manquerait du graphe sans que rien ne le
+    # dise — précisément le genre d'angle mort que ce script existe pour fermer.
+    names = set(re.findall(r"^(ferrlabs-[a-z0-9-]+)\s*=", manifest.read_text(), re.M))
     return names - {f"ferrlabs-{crate_dir.name}"}
 
 
