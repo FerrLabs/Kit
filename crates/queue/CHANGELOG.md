@@ -4,6 +4,13 @@ All notable changes to `ferrlabs-queue` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.1] - 2026-08-05
+
+### Bug Fixes
+
+- fix(queue): retire la version de la dependance de dev testkit (#193)
+- fix(release): valide l'ordre topologique de ferrflow.json en CI (#191)
+
 ## [2.1.0] - 2026-08-05
 
 ### Features
