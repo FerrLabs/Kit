@@ -4,6 +4,14 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.1] - 2026-08-05
+
+### Bug Fixes
+
+- fix(release): publie ferrlabs-id avant ferrlabs-audit qui en dépend (#188)
+- fix(release): publie les huit crates absentes de ferrflow.json (#187)
+- perf(ci): retire apt-packages, les runners portent déjà ces paquets (#186)
+
 ## [2.1.0] - 2026-08-04
 
 ### Features
