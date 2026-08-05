@@ -89,17 +89,17 @@ ferrlabs-crypto = { path = "crates/crypto", version = "2.0.1", registry = "kelln
 ferrlabs-auth = { path = "crates/auth", version = "2.1.0", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }
-ferrlabs-permissions = { path = "crates/permissions", version = "1.0.0", registry = "kellnr" }
-ferrlabs-queue = { path = "crates/queue", version = "1.0.0", registry = "kellnr" }
+ferrlabs-permissions = { path = "crates/permissions", version = "2.0.0", registry = "kellnr" }
+ferrlabs-queue = { path = "crates/queue", version = "2.0.0", registry = "kellnr" }
 ferrlabs-telemetry = { path = "crates/telemetry", version = "1.0.0", registry = "kellnr" }
-ferrlabs-vault = { path = "crates/vault", version = "1.0.0", registry = "kellnr" }
-ferrlabs-http = { path = "crates/http", version = "1.0.0", registry = "kellnr" }
+ferrlabs-vault = { path = "crates/vault", version = "2.0.0", registry = "kellnr" }
+ferrlabs-http = { path = "crates/http", version = "2.0.0", registry = "kellnr" }
 ferrlabs-testkit = { path = "crates/testkit", version = "1.0.0", registry = "kellnr" }
-ferrlabs-id = { path = "crates/id", version = "1.0.0", registry = "kellnr" }
+ferrlabs-id = { path = "crates/id", version = "2.0.0", registry = "kellnr" }
 ferrlabs-license = { path = "crates/license", version = "1.0.0", registry = "kellnr" }
-ferrlabs-ratelimit = { path = "crates/ratelimit", version = "1.0.0", registry = "kellnr" }
-ferrlabs-webhooks = { path = "crates/webhooks", version = "1.0.0", registry = "kellnr" }
-ferrlabs-audit = { path = "crates/audit", version = "1.0.0", registry = "kellnr" }
+ferrlabs-ratelimit = { path = "crates/ratelimit", version = "2.0.0", registry = "kellnr" }
+ferrlabs-webhooks = { path = "crates/webhooks", version = "2.0.0", registry = "kellnr" }
+ferrlabs-audit = { path = "crates/audit", version = "2.0.0", registry = "kellnr" }
 ferrlabs-api-version = { path = "crates/api-version", version = "1.0.0", registry = "kellnr" }
 
 [workspace.lints.rust]
