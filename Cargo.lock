@@ -1413,6 +1413,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "ferrlabs-testkit",
  "futures-util",
  "serde",
  "serde_json",

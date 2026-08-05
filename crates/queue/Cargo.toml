@@ -27,6 +27,18 @@ tokio = { workspace = true }
 async-trait = "0.1"
 serde = { workspace = true }
 uuid = { workspace = true }
+# Not `{ workspace = true }`: the root `[workspace.dependencies]` entry is
+# pinned to `1.0.0` while `crates/testkit` is locally at `2.1.1`, so the
+# workspace alias fails to resolve. Root `Cargo.toml` is off-limits here
+# (touching it republishes ~9 crates via `sharedPaths`), so this crate
+# points at the path directly instead.
+ferrlabs-testkit = { path = "../testkit", version = "2.1.1" }
+
+[features]
+# Gates the Postgres-backed integration tests under tests/. Off by default
+# so `cargo test -p ferrlabs-queue` never needs Docker or a live database;
+# run with `cargo test -p ferrlabs-queue --features integration -- --ignored`.
+integration = []
 
 [lints]
 workspace = true
