@@ -296,6 +296,29 @@
       ]
     },
     {
+      "name": "ferrlabs-id",
+      "path": "crates/id",
+      "changelog": "crates/id/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/id/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-id = .*version = \"([^\"]+)\""
+        }
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
       "name": "ferrlabs-audit",
       "path": "crates/audit",
       "changelog": "crates/audit/CHANGELOG.md",
@@ -334,29 +357,6 @@
           "path": "Cargo.toml",
           "format": "txt",
           "selector": "(?m)^ferrlabs-http = .*version = \"([^\"]+)\""
-        }
-      ],
-      "publishers": [
-        {
-          "kind": "cargo",
-          "registry": "kellnr",
-          "noVerify": true
-        }
-      ]
-    },
-    {
-      "name": "ferrlabs-id",
-      "path": "crates/id",
-      "changelog": "crates/id/CHANGELOG.md",
-      "versionedFiles": [
-        {
-          "path": "crates/id/Cargo.toml",
-          "format": "toml"
-        },
-        {
-          "path": "Cargo.toml",
-          "format": "txt",
-          "selector": "(?m)^ferrlabs-id = .*version = \"([^\"]+)\""
         }
       ],
       "publishers": [
