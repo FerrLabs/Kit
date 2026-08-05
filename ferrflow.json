@@ -252,27 +252,6 @@
       ]
     },
     {
-      "name": "ferrlabs-testkit",
-      "path": "crates/testkit",
-      "changelog": "crates/testkit/CHANGELOG.md",
-      "versionedFiles": [
-        {
-          "path": "crates/testkit/Cargo.toml",
-          "format": "toml"
-        }
-      ],
-      "sharedPaths": [
-        "Cargo.toml"
-      ],
-      "publishers": [
-        {
-          "kind": "cargo",
-          "registry": "kellnr",
-          "noVerify": true
-        }
-      ]
-    },
-    {
       "name": "ferrlabs-api-version",
       "path": "crates/api-version",
       "changelog": "crates/api-version/CHANGELOG.md",
@@ -286,6 +265,27 @@
           "format": "txt",
           "selector": "(?m)^ferrlabs-api-version = .*version = \"([^\"]+)\""
         }
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
+      "name": "ferrlabs-testkit",
+      "path": "crates/testkit",
+      "changelog": "crates/testkit/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/testkit/Cargo.toml",
+          "format": "toml"
+        }
+      ],
+      "sharedPaths": [
+        "Cargo.toml"
       ],
       "publishers": [
         {
