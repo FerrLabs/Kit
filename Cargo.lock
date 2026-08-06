@@ -1234,7 +1234,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "2.2.0"
+version = "2.2.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1246,6 +1246,7 @@ dependencies = [
  "ferrlabs-crypto",
  "ferrlabs-db",
  "ferrlabs-errors",
+ "ferrlabs-oauth",
  "ferrlabs-types",
  "hmac 0.13.0",
  "http 1.5.0",
@@ -1268,7 +1269,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1302,7 +1303,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1322,7 +1323,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.2.0"
+version = "2.2.1"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1334,7 +1335,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "2.2.0"
+version = "2.2.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -1382,7 +1383,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -1397,8 +1398,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferrlabs-oauth"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.23.1",
+ "ferrlabs-errors",
+ "rand 0.10.2",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "thiserror 2.0.19",
+ "url",
+]
+
+[[package]]
 name = "ferrlabs-permissions"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "ferrlabs-errors",
  "serde",
@@ -1457,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "2.2.1"
+version = "2.2.2"
 dependencies = [
  "anyhow",
  "ferrlabs-api-version",
@@ -1472,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "chrono",
  "serde",

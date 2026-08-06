@@ -13,7 +13,8 @@
 //!
 //! ## Implemented (M3)
 //!
-//! - [`oauth`] — OAuth authorization-code login (GitHub, Google) with PKCE
+//! - [`oauth`] — OAuth authorization-code login (GitHub, Google, Discord),
+//!   re-exported from the standalone `ferrlabs-oauth` crate
 //! - [`totp`] — TOTP MFA with envelope-encrypted seeds + recovery codes
 //!
 //! ## Scaffolded (later milestones)
@@ -29,14 +30,14 @@
 
 pub mod jwt;
 pub mod middleware;
-pub mod oauth;
 pub mod password;
 pub mod session;
 pub mod totp;
 
+pub use ferrlabs_oauth as oauth;
+pub use ferrlabs_oauth::{AuthorizeRequest, OAuthClient, OAuthError, OAuthProvider, OAuthUser};
 pub use jwt::{Claims, JwtConfig, JwtError, issue_token, verify_token};
 pub use middleware::AuthUser;
-pub use oauth::{AuthorizeRequest, OAuthClient, OAuthError, OAuthProvider, OAuthUser};
 pub use password::{hash as hash_password, verify as verify_password};
 pub use session::{
     DEFAULT_REFRESH_TTL, IssuedSession, PgSessionStore, Session, SessionError, SessionStore,

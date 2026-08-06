@@ -139,6 +139,32 @@
       ]
     },
     {
+      "name": "ferrlabs-oauth",
+      "path": "crates/oauth",
+      "changelog": "crates/oauth/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/oauth/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-oauth = .*version = \"([^\"]+)\""
+        }
+      ],
+      "dependsOn": [
+        "ferrlabs-errors"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
       "name": "ferrlabs-auth",
       "path": "crates/auth",
       "changelog": "crates/auth/CHANGELOG.md",
@@ -157,7 +183,8 @@
         "ferrlabs-errors",
         "ferrlabs-types",
         "ferrlabs-crypto",
-        "ferrlabs-db"
+        "ferrlabs-db",
+        "ferrlabs-oauth"
       ],
       "sharedPaths": [
         "Cargo.toml"
