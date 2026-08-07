@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0] - 2026-08-07
+
+### Features
+
+- feat(oauth): add Discord provider and extract the OAuth client into ferrlabs-oauth (#195)
+
 ## [2.2.1] - 2026-08-07
 
 ### Bug Fixes
