@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.2] - 2026-08-07
+
+### Bug Fixes
+
+- fix(queue): retire la version de la dependance de dev testkit (#193)
+
 ## [2.2.1] - 2026-08-05
 
 ### Bug Fixes
