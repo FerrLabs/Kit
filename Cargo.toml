@@ -13,6 +13,7 @@ members = [
     "crates/id",
     "crates/license",
     "crates/middleware",
+    "crates/oauth",
     "crates/permissions",
     "crates/queue",
     "crates/ratelimit",
@@ -86,6 +87,7 @@ ferrlabs-errors = { path = "crates/errors", version = "2.2.1", registry = "kelln
 ferrlabs-types = { path = "crates/types", version = "2.1.1", registry = "kellnr" }
 ferrlabs-db = { path = "crates/db", version = "2.2.1", registry = "kellnr" }
 ferrlabs-crypto = { path = "crates/crypto", version = "2.1.1", registry = "kellnr" }
+ferrlabs-oauth = { path = "crates/oauth", version = "0.1.0", registry = "kellnr" }
 ferrlabs-auth = { path = "crates/auth", version = "2.2.1", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }

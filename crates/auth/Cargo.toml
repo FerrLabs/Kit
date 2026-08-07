@@ -12,6 +12,7 @@ description = "Authentication for FerrLabs APIs: JWT, sessions, OAuth, password 
 ferrlabs-errors = { workspace = true }
 ferrlabs-types = { workspace = true }
 ferrlabs-crypto = { workspace = true }
+ferrlabs-oauth = { workspace = true }
 ferrlabs-db = { workspace = true }
 axum = { workspace = true }
 tower = { workspace = true }

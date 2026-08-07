@@ -1,4 +1,4 @@
-//! OAuth 2.0 authorization-code login for Google and GitHub.
+//! OAuth 2.0 authorization-code login for Google, GitHub and Discord.
 //!
 //! Flow, provider-agnostic:
 //! 1. [`OAuthClient::authorize_url`] builds the provider's authorize URL with a
@@ -11,21 +11,32 @@
 //!    verifier) for an access token, then [`OAuthClient::fetch_user`] returns a
 //!    normalized [`OAuthUser`].
 //!
-//! **PKCE.** Google supports PKCE S256 and we always use it there. GitHub's
-//! web flow does not implement PKCE, so for GitHub we rely on `state` alone and
-//! send no `code_verifier`. The provider config drives this difference.
+//! **PKCE.** Google supports PKCE S256 and we always use it there. GitHub's web
+//! flow does not implement it. Discord accepts it for public clients, but we
+//! drive Discord as a confidential client (`client_secret` on the token call),
+//! where `state` alone is the documented defence — so we send no
+//! `code_verifier` there either. The provider config drives this difference.
+//!
+//! **Picking providers.** Every provider is opt-in by construction: build an
+//! [`OAuthClient`] only for what the product configures. [`OAuthProvider`]
+//! implements [`FromStr`](std::str::FromStr) so a URL segment or config key can
+//! be resolved to a provider, and anything unrecognised comes back as
+//! [`UnknownProvider`] instead of silently falling through.
+//!
+//! Products that map [`OAuthError`] onto their own error type can drop the
+//! default `errors` feature to skip the `ferrlabs-errors` dependency.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use ferrlabs_errors::ApiError;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use url::Url;
 
 /// Which identity provider a flow targets.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OAuthProvider {
     Google,
     GitHub,
+    Discord,
 }
 
 impl OAuthProvider {
@@ -34,6 +45,7 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => "google",
             OAuthProvider::GitHub => "github",
+            OAuthProvider::Discord => "discord",
         }
     }
 
@@ -41,6 +53,7 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => "https://accounts.google.com/o/oauth2/v2/auth",
             OAuthProvider::GitHub => "https://github.com/login/oauth/authorize",
+            OAuthProvider::Discord => "https://discord.com/api/oauth2/authorize",
         }
     }
 
@@ -48,6 +61,7 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => "https://oauth2.googleapis.com/token",
             OAuthProvider::GitHub => "https://github.com/login/oauth/access_token",
+            OAuthProvider::Discord => "https://discord.com/api/oauth2/token",
         }
     }
 
@@ -55,6 +69,7 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => "https://openidconnect.googleapis.com/v1/userinfo",
             OAuthProvider::GitHub => "https://api.github.com/user",
+            OAuthProvider::Discord => "https://discord.com/api/users/@me",
         }
     }
 
@@ -62,11 +77,39 @@ impl OAuthProvider {
         match self {
             OAuthProvider::Google => "openid email profile",
             OAuthProvider::GitHub => "read:user user:email",
+            // `identify` is the minimum: account id, username, avatar. Add
+            // `email` via the scope override when the product needs it.
+            OAuthProvider::Discord => "identify",
         }
     }
 
     fn supports_pkce(self) -> bool {
         matches!(self, OAuthProvider::Google)
+    }
+}
+
+/// Returned by [`OAuthProvider`]'s [`FromStr`](std::str::FromStr) when a string
+/// names no provider this build knows about.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+#[error("unknown oauth provider: {0}")]
+pub struct UnknownProvider(pub String);
+
+impl std::str::FromStr for OAuthProvider {
+    type Err = UnknownProvider;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "google" => Ok(OAuthProvider::Google),
+            "github" => Ok(OAuthProvider::GitHub),
+            "discord" => Ok(OAuthProvider::Discord),
+            other => Err(UnknownProvider(other.to_owned())),
+        }
+    }
+}
+
+impl std::fmt::Display for OAuthProvider {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -80,8 +123,10 @@ pub enum OAuthError {
     MissingField(&'static str),
 }
 
-impl From<OAuthError> for ApiError {
+#[cfg(feature = "errors")]
+impl From<OAuthError> for ferrlabs_errors::ApiError {
     fn from(err: OAuthError) -> Self {
+        use ferrlabs_errors::ApiError;
         match err {
             OAuthError::Provider(msg) => ApiError::BadRequest(msg),
             OAuthError::MissingField(field) => {
@@ -118,7 +163,8 @@ pub struct AuthorizeRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OAuthUser {
     pub provider: OAuthProvider,
-    /// Provider-stable subject id (`sub` for Google, numeric `id` for GitHub).
+    /// Provider-stable subject id (`sub` for Google, numeric `id` for GitHub,
+    /// snowflake `id` for Discord).
     pub provider_user_id: String,
     pub email: Option<String>,
     pub email_verified: bool,
@@ -274,6 +320,16 @@ struct GitHubUserInfo {
     login: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct DiscordUserInfo {
+    id: String,
+    username: String,
+    global_name: Option<String>,
+    email: Option<String>,
+    #[serde(default)]
+    verified: bool,
+}
+
 fn parse_user(provider: OAuthProvider, body: &str) -> Result<OAuthUser, OAuthError> {
     match provider {
         OAuthProvider::Google => {
@@ -299,6 +355,22 @@ fn parse_user(provider: OAuthProvider, body: &str) -> Result<OAuthUser, OAuthErr
                 // needs that guarantee.
                 email_verified: false,
                 name: info.name.or(info.login),
+            })
+        }
+        OAuthProvider::Discord => {
+            let info: DiscordUserInfo = serde_json::from_str(body)
+                .map_err(|e| OAuthError::Provider(format!("discord user: {e}")))?;
+            Ok(OAuthUser {
+                provider,
+                provider_user_id: info.id,
+                email: info.email,
+                // `verified` is absent unless the token carries the `email`
+                // scope, and serde defaults it to false — which is the safe
+                // reading of "we were not told".
+                email_verified: info.verified,
+                // `global_name` is the display name Discord moved to; it is
+                // null on accounts that never migrated off discriminators.
+                name: info.global_name.or(Some(info.username)),
             })
         }
     }
@@ -489,5 +561,87 @@ mod tests {
     fn malformed_userinfo_is_an_error() {
         assert!(parse_user(OAuthProvider::Google, "not json").is_err());
         assert!(parse_user(OAuthProvider::GitHub, "{}").is_err());
+        assert!(parse_user(OAuthProvider::Discord, "{}").is_err());
+    }
+
+    fn discord_client() -> OAuthClient {
+        OAuthClient::new(
+            OAuthProvider::Discord,
+            "discord-client-id",
+            "discord-secret",
+            "https://app.ferrgames.com/api/v1/me/discord/callback",
+            None,
+        )
+    }
+
+    #[test]
+    fn discord_authorize_url_uses_identify_scope_and_omits_pkce() {
+        let req = discord_client().authorize_url();
+        assert!(
+            req.url
+                .starts_with("https://discord.com/api/oauth2/authorize?")
+        );
+        let q = query_pairs(&req.url);
+
+        assert_eq!(q.get("client_id").unwrap(), "discord-client-id");
+        assert_eq!(
+            q.get("redirect_uri").unwrap(),
+            "https://app.ferrgames.com/api/v1/me/discord/callback"
+        );
+        assert_eq!(q.get("response_type").unwrap(), "code");
+        assert_eq!(q.get("scope").unwrap(), "identify");
+        assert_eq!(q.get("state").unwrap(), &req.state);
+        assert!(!q.contains_key("code_challenge"));
+        assert!(req.pkce_verifier.is_none());
+    }
+
+    #[test]
+    fn parses_discord_user_preferring_global_name() {
+        let body = r#"{
+            "id": "80351110224678912",
+            "username": "nelly",
+            "global_name": "Nelly",
+            "email": "nelly@discord.com",
+            "verified": true
+        }"#;
+        let user = parse_user(OAuthProvider::Discord, body).unwrap();
+        assert_eq!(user.provider, OAuthProvider::Discord);
+        assert_eq!(user.provider_user_id, "80351110224678912");
+        assert_eq!(user.name.as_deref(), Some("Nelly"));
+        assert_eq!(user.email.as_deref(), Some("nelly@discord.com"));
+        assert!(user.email_verified);
+    }
+
+    #[test]
+    fn discord_user_falls_back_to_username_and_defaults_unverified() {
+        let body = r#"{ "id": "1", "username": "ghost", "global_name": null }"#;
+        let user = parse_user(OAuthProvider::Discord, body).unwrap();
+        assert_eq!(user.name.as_deref(), Some("ghost"));
+        assert!(user.email.is_none());
+        assert!(!user.email_verified);
+    }
+
+    #[test]
+    fn provider_names_round_trip() {
+        for provider in [
+            OAuthProvider::Google,
+            OAuthProvider::GitHub,
+            OAuthProvider::Discord,
+        ] {
+            assert_eq!(provider.as_str().parse(), Ok(provider));
+            assert_eq!(provider.to_string(), provider.as_str());
+        }
+    }
+
+    #[test]
+    fn unknown_provider_names_are_rejected() {
+        // Case matters: `as_str` is lowercase, so anything else would not
+        // round-trip and must not resolve.
+        for name in ["twitch", "Google", "", "google "] {
+            assert_eq!(
+                name.parse::<OAuthProvider>(),
+                Err(UnknownProvider(name.to_owned()))
+            );
+        }
     }
 }

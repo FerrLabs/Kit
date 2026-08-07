@@ -1,0 +1,28 @@
+[package]
+name = "ferrlabs-oauth"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "OAuth 2.0 authorization-code clients for Google, GitHub and Discord"
+
+[features]
+default = ["errors"]
+errors = ["dep:ferrlabs-errors", "dep:anyhow"]
+
+[dependencies]
+base64 = { workspace = true }
+rand = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+ferrlabs-errors = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
+
+[lints]
+workspace = true
