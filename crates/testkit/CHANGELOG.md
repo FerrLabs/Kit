@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.0] - 2026-08-16
+
+### Features
+
+- feat(github): add a crate for App tokens and installation ownership (#220)
+
+### Bug Fixes
+
+- fix(ci): accorde pull-requests write au job appelant les reusables (#207)
+
 ## [2.3.0] - 2026-08-07
 
 ### Features
