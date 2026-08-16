@@ -165,6 +165,32 @@
       ]
     },
     {
+      "name": "ferrlabs-github",
+      "path": "crates/github",
+      "changelog": "crates/github/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/github/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-github = .*version = \"([^\"]+)\""
+        }
+      ],
+      "dependsOn": [
+        "ferrlabs-oauth"
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
       "name": "ferrlabs-auth",
       "path": "crates/auth",
       "changelog": "crates/auth/CHANGELOG.md",
