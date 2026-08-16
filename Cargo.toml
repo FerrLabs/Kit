@@ -9,6 +9,7 @@ members = [
     "crates/crypto",
     "crates/db",
     "crates/errors",
+    "crates/github",
     "crates/http",
     "crates/id",
     "crates/license",
@@ -88,6 +89,7 @@ ferrlabs-types = { path = "crates/types", version = "2.2.0", registry = "kellnr"
 ferrlabs-db = { path = "crates/db", version = "2.3.0", registry = "kellnr" }
 ferrlabs-crypto = { path = "crates/crypto", version = "2.2.0", registry = "kellnr" }
 ferrlabs-oauth = { path = "crates/oauth", version = "1.0.0", registry = "kellnr" }
+ferrlabs-github = { path = "crates/github", version = "1.0.0", registry = "kellnr" }
 ferrlabs-auth = { path = "crates/auth", version = "2.3.0", registry = "kellnr" }
 ferrlabs-billing = { path = "crates/billing", version = "1.0.0", registry = "kellnr" }
 ferrlabs-middleware = { path = "crates/middleware", version = "1.0.0", registry = "kellnr" }
