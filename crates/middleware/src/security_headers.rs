@@ -1,9 +1,15 @@
 //! Adds defence-in-depth security headers to every API response.
 //!
-//! These are belt-and-braces — the frontends (packages/app, admin, site) ship
-//! their own CSP + security headers from nginx. Emitting them here as well
-//! means direct API callers, embedded views, and any tooling that hits the
-//! API without going through nginx still get the guarantees.
+//! These are belt-and-braces: the product frontends ship their own CSP and
+//! security headers from nginx. Emitting them here as well means direct API
+//! callers — CLIs, Kubernetes operators, `curl`, anything that reaches the API
+//! without passing through a frontend's nginx — get the same guarantees.
+//!
+//! Deliberately not included: `Content-Security-Policy`, which is meaningful
+//! for documents rather than JSON, and `Cache-Control`. Caching policy is
+//! per-route (an endpoint returning a decrypted secret wants `no-store`, a
+//! health check does not), so it belongs with the route, not in a blanket
+//! layer that would either be wrong somewhere or too weak everywhere.
 //!
 //! HSTS is the one header we gate on config: sending
 //! `Strict-Transport-Security` from a plain-HTTP origin pins the wrong scheme
@@ -18,12 +24,14 @@ use axum::{
     response::Response,
 };
 
-/// Input to the [`security_headers`] layer. A dedicated struct (rather than
-/// reaching into [`crate::AppState`]) keeps the layer trivially unit-testable
-/// and avoids a second `State<AppState>` on every request purely to read one
-/// boolean.
+/// Input to the [`security_headers`] layer. A dedicated struct, rather than
+/// the consumer's own application state, keeps the layer trivially
+/// unit-testable and avoids threading a second `State` through every request
+/// purely to read one boolean.
 #[derive(Clone, Copy, Debug)]
 pub struct SecurityHeadersConfig {
+    /// Whether the origin terminates TLS. Gates `Strict-Transport-Security`
+    /// only; every other header is emitted unconditionally.
     pub tls_enabled: bool,
 }
 
