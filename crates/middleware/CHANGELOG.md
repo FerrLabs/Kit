@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-middleware` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.0] - 2026-08-17
+
+### Features
+
+- feat(middleware): ship the security-headers layer (#226)
+
 ## [2.3.0] - 2026-08-16
 
 ## [2.2.0] - 2026-08-07
