@@ -145,12 +145,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arrayref"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
-
-[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -412,11 +406,10 @@ dependencies = [
 
 [[package]]
 name = "blake3"
-version = "1.8.6"
+version = "1.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76ae7bad254120e9e4c63bafc385310756f90c484eac0e36b8317cf09cb92a77"
+checksum = "6d9e454fc11f76977dc803893aff6304ed33d6a26efae8696573bea74baa27ae"
 dependencies = [
- "arrayref",
  "arrayvec",
  "cc",
  "cfg-if",
@@ -1271,7 +1264,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1306,7 +1299,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1340,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1360,7 +1353,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1372,7 +1365,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1387,7 +1380,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-github"
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1435,7 +1428,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "2.2.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1451,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-oauth"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1467,7 +1460,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "ferrlabs-errors",
  "serde",
@@ -1526,7 +1519,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "ferrlabs-api-version",
@@ -1541,7 +1534,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "chrono",
  "serde",
