@@ -4,6 +4,16 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.0] - 2026-08-23
+
+### Features
+
+- feat(middleware): ship the security-headers layer (#226)
+
+### Bug Fixes
+
+- perf(bench): add benchmarks for ferrlabs-crypto and ferrlabs-permissions (#239)
+
 ## [2.4.0] - 2026-08-16
 
 ### Features
