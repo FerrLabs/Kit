@@ -1372,7 +1372,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1407,7 +1407,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1441,7 +1441,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1462,7 +1462,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1474,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1489,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-github"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1553,7 +1553,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-oauth"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "criterion",
  "ferrlabs-errors",
@@ -1629,7 +1629,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "2.4.0"
+version = "2.5.0"
 dependencies = [
  "anyhow",
  "ferrlabs-api-version",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.3.0"
+version = "2.4.0"
 dependencies = [
  "chrono",
  "serde",
@@ -5351,9 +5351,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.24.1"
+version = "1.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cefc03fd367c0c6d4305de1b312cf00248c4114f4a0418ce6a6af769e3b0bd9"
+checksum = "f053576934f05a761a402421fbbe3d425d9366f75f978806a037b3ca481abecc"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
