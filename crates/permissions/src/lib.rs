@@ -327,8 +327,10 @@ impl<R: Resource> Clone for ScopedResource<R> {
 
 impl<R: Resource> Copy for ScopedResource<R> {}
 
-/// A set of scopes attached to a session or API token. O(1) lookup
-/// with implication-aware `has`.
+/// A set of scopes attached to a session or API token. `has` is
+/// implication-aware, so it scans the granted scopes rather than
+/// hashing straight to an answer: cost is linear in the size of the
+/// set, and a denied check pays the full scan.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ScopeSet {
     inner: HashSet<Scope>,

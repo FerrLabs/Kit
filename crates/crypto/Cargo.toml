@@ -26,3 +26,10 @@ gcp_auth = "0.12"
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "ferrlabs_crypto"
+harness = false
