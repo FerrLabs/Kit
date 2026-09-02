@@ -31,7 +31,7 @@ jobs:
       contents: read
       pull-requests: write
     name: CI
-    uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@a5886d74297dafc6aed9ee9f9aa75d7a06c831ca # main
+    uses: FerrLabs/.github/.github/workflows/reusable-ci-rust.yml@71acd9ae328af791b3a65ea09ab233b1945636d4 # main
     with:
       enable-sonar: true
       cargo-flags: --workspace --all-features
