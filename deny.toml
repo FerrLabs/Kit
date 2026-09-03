@@ -1,0 +1,71 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+# Every entry is an advisory with no upgrade available on 2026-09-02, not one
+# we chose not to fix. Kit#260 tracks emptying this list; anything new must
+# fail the build rather than join it.
+#
+# Seven of the eight share one root: `async-stripe` 0.41 in `ferrlabs-billing`
+# is built on hyper 0.14, so it carries an entire legacy HTTP/TLS subtree
+# (h2 0.3, rustls 0.21, rustls-webpki 0.101, rustls-pemfile 1.0, http-types 2,
+# fastrand 1 / instant). The only newer release is 1.0.0-rc.8, a breaking
+# pre-release of a payments client, which is a deliberate upgrade rather than
+# something to slip into a CI change.
+ignore = [
+  { id = "RUSTSEC-2023-0071", reason = "Marvin timing sidechannel in `rsa`, which has never shipped a fix. Reached only through `jsonwebtoken` in `auth`, `github` and `license`. Removing it means those crates rejecting RSA algorithms outright, tracked in Kit#260." },
+  { id = "RUSTSEC-2024-0384", reason = "`instant` unmaintained, reached only as fastrand 1.x -> futures-lite 1.x -> http-types 2.x under `async-stripe` 0.41. Goes when that goes." },
+  { id = "RUSTSEC-2025-0134", reason = "`rustls-pemfile` unmaintained, folded upstream into `rustls-pki-types`. Two copies: 1.0.4 under `async-stripe`, and 2.2.0 as a direct dependency of `ferrlabs-cache`. The second is a small migration and is the cheapest item in Kit#260." },
+  { id = "RUSTSEC-2026-0098", reason = "`rustls-webpki` 0.101.7, reached only via rustls 0.21 under `async-stripe` 0.41. Kit's own TLS elsewhere is rustls 0.23." },
+  { id = "RUSTSEC-2026-0099", reason = "Same `rustls-webpki` 0.101.7 and same path as RUSTSEC-2026-0098." },
+  { id = "RUSTSEC-2026-0104", reason = "Same `rustls-webpki` 0.101.7. The advisory is a panic in CRL parsing and states applications not using CRLs are unaffected; the Stripe client loads none." },
+  { id = "RUSTSEC-2026-0174", reason = "`http-types` notice on `Authorization::value` ASCII invariants. Pulled only by `async-stripe` 0.41, and Kit never constructs those header types itself." },
+  { id = "RUSTSEC-2026-0258", reason = "`h2` 0.3 empty-DATA-frame flood, an attack against an h2 *server*. Present only as the Stripe client's outbound HTTP. Kit ships no h2 0.3 server." },
+]
+
+[licenses]
+version = 2
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-DFS-2016",
+  "Unicode-3.0",
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "Zlib",
+  "MPL-2.0",
+  "LicenseRef-FerrLabs-Proprietary",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Intra-workspace `path` dependencies carry no version and read as wildcards.
+# `ferrlabs-queue` pulls `ferrlabs-testkit` that way under [dev-dependencies];
+# that is a local crate, not an unpinned registry dependency.
+allow-wildcard-paths = true
+highlight = "all"
+deny = [
+  { crate = "proc-macro1", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+  { crate = "proc-macro-en", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+  { crate = "aovine", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+  { crate = "arone", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+  { crate = "aronenao", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+  { crate = "tinymember", reason = "Malicious crate from the 2026-08-20 arrayref supply-chain attack." },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = [
+  "https://github.com/rust-lang/crates.io-index",
+  "sparse+https://crates.ferrlabs.com/api/v1/crates/",
+]
+allow-git = []
