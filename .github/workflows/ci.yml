@@ -37,7 +37,7 @@ jobs:
       cargo-flags: --workspace --all-features
       coverage-flags: --all-features
       clippy-args: -D warnings
-      enable-deny: false
+      enable-deny: true
       enable-typos: false
       enable-coverage: true
     secrets: inherit
