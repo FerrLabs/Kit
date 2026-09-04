@@ -39,8 +39,20 @@ use lettre::message::header::HeaderName;
 ///
 /// `From` est le seul strictement exigé, mais le laisser seul autorise la
 /// réécriture du sujet, de la date et du destinataire sans casser la
-/// signature. Les cinq ensemble protègent ce qu'un lecteur voit du message.
-const SIGNED_HEADERS: [&str; 5] = ["From", "To", "Subject", "Date", "Message-ID"];
+/// signature. Les quatre ensemble protègent ce qu'un lecteur voit du message.
+///
+/// `Message-ID` en est volontairement absent. `MessageBuilder::build` insère
+/// `Date` quand elle manque, mais ne génère jamais de `Message-ID` : il faut
+/// l'avoir posé soi-même. Or annoncer dans `h=` un en-tête que le message ne
+/// porte pas est du null-signing, ce que la RFC 6376 §5.4 définit comme le
+/// mécanisme **interdisant** son ajout ultérieur. Le relais qui pose le
+/// `Message-ID` manquant — ce que fait à peu près tout MSA — invaliderait donc
+/// la signature, produisant exactement le `dkim=fail` que cette crate existe
+/// pour éviter.
+///
+/// Il pourra revenir le jour où un appelant garantit l'en-tête avant de
+/// signer.
+const SIGNED_HEADERS: [&str; 4] = ["From", "To", "Subject", "Date"];
 
 #[derive(Debug, thiserror::Error)]
 pub enum DkimError {
@@ -164,6 +176,29 @@ mod tests {
 
         let header = signed_header(&message);
         assert!(header.contains("c=relaxed/relaxed"), "en-tête : {header}");
+    }
+
+    /// Chaque en-tête déclaré dans `h=` doit exister DANS le message.
+    ///
+    /// C'est la vérification qui manquait : `covers_every_declared_header` lit
+    /// la liste annoncée sans regarder le message, donc il passait sur un
+    /// `Message-ID` que `lettre` ne génère pas. Annoncer un en-tête absent est
+    /// du null-signing, et la RFC 6376 §5.4 en fait le mécanisme interdisant
+    /// son ajout ultérieur : le relais qui le pose casse la signature.
+    #[test]
+    fn chaque_entete_declare_existe_dans_le_message() {
+        let message = message();
+        let brut = String::from_utf8(message.formatted())
+            .unwrap()
+            .to_lowercase();
+        for name in SIGNED_HEADERS {
+            assert!(
+                brut.contains(&format!("\n{}:", name.to_lowercase()))
+                    || brut.starts_with(&format!("{}:", name.to_lowercase())),
+                "`{name}` est signé mais absent du message : signature invalidée \
+                 dès qu'un relais l'ajoutera"
+            );
+        }
     }
 
     #[test]
