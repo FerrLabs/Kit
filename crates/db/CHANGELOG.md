@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.0] - 2026-09-04
+
+### Features
+
+- feat(mail): crate de signature DKIM (#264)
+
 ## [2.5.0] - 2026-08-23
 
 ### Features

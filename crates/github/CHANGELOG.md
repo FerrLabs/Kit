@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-github` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] - 2026-09-04
+
 ## [2.1.0] - 2026-08-23
 
 ## [2.0.0] - 2026-08-16
