@@ -13,6 +13,7 @@ members = [
     "crates/http",
     "crates/id",
     "crates/license",
+    "crates/mail",
     "crates/middleware",
     "crates/oauth",
     "crates/permissions",
