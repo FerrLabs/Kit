@@ -139,6 +139,24 @@
       ]
     },
     {
+      "name": "ferrlabs-mail",
+      "path": "crates/mail",
+      "changelog": "crates/mail/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/mail/Cargo.toml",
+          "format": "toml"
+        }
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "registry": "kellnr",
+          "noVerify": true
+        }
+      ]
+    },
+    {
       "name": "ferrlabs-oauth",
       "path": "crates/oauth",
       "changelog": "crates/oauth/CHANGELOG.md",
