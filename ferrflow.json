@@ -5,6 +5,7 @@
     "tagTemplate": "{name}@v{version}",
     "recoverMissedReleases": true,
     "deferPublish": true,
+    "updateLockfiles": true,
     "registries": {
       "kellnr": {
         "tokenEnv": "CARGO_REGISTRIES_KELLNR_TOKEN"
