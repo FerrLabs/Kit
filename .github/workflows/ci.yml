@@ -8,10 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Le seul garde-fou sur l'ordre de publication. FerrFlow publie dans l'ordre
-  # de déclaration de ferrflow.json ; `dependsOn` documente la relation sans la
-  # faire respecter. Une crate placée avant une de ses dépendances casse la
-  # release, et seulement le jour où les deux bougent ensemble.
   ferrflow-order:
     name: ferrflow.json order
     runs-on: ubuntu-latest
@@ -20,13 +16,6 @@ jobs:
       - run: python3 scripts/check-ferrflow-order.py
 
   ci:
-    # Le workflow appele finit par appeler reusable-sonarqube-scan, qui demande
-    # `pull-requests: write` pour commenter le delta sur les PR. Un workflow
-    # appele ne peut pas obtenir plus que ce que son appelant lui accorde, et le
-    # defaut du repo est `read` : sans cette ligne, GitHub refuse de demarrer le
-    # run entier (startup_failure, aucun job cree, aucun message exploitable).
-    # La condition `enable-sonar` ne protege pas : les permissions sont validees
-    # au demarrage, avant toute evaluation de `if`.
     permissions:
       contents: read
       pull-requests: write
