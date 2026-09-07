@@ -1394,7 +1394,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1429,7 +1429,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.5.0"
+version = "2.5.1"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1463,7 +1463,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-crypto"
-version = "2.5.0"
+version = "2.5.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1484,7 +1484,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1496,7 +1496,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-errors"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -1511,7 +1511,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-github"
-version = "2.2.0"
+version = "2.2.1"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1568,7 +1568,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -1584,7 +1584,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-oauth"
-version = "1.3.0"
+version = "1.3.1"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1600,7 +1600,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "2.5.0"
+version = "2.5.1"
 dependencies = [
  "criterion",
  "ferrlabs-errors",
@@ -1660,7 +1660,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-testkit"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "anyhow",
  "ferrlabs-api-version",
@@ -1675,7 +1675,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.5.0"
+version = "2.5.1"
 dependencies = [
  "chrono",
  "serde",
