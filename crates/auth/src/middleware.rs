@@ -10,6 +10,8 @@
 //! the application state. Any app whose state can hand out a `JwtConfig`
 //! (via [`FromRef`]) gets the extractor for free.
 
+use std::future::{Future, ready};
+
 use axum::extract::{FromRef, FromRequestParts};
 use ferrlabs_errors::ApiError;
 use http::header::AUTHORIZATION;
@@ -43,14 +45,11 @@ fn bearer_token(parts: &Parts) -> Option<&str> {
         .strip_prefix("Bearer ")
 }
 
-impl<S> FromRequestParts<S> for AuthUser
-where
-    JwtConfig: FromRef<S>,
-    S: Sync,
-{
-    type Rejection = ApiError;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+impl AuthUser {
+    fn extract<S>(parts: &mut Parts, state: &S) -> Result<Self, ApiError>
+    where
+        JwtConfig: FromRef<S>,
+    {
         let token = bearer_token(parts).ok_or(ApiError::Unauthorized)?;
         let config = JwtConfig::from_ref(state);
         let claims = verify_token(&config, token).map_err(|_| ApiError::Unauthorized)?;
@@ -59,6 +58,21 @@ where
             user_id: claims.sub,
             active_org: claims.org,
         })
+    }
+}
+
+impl<S> FromRequestParts<S> for AuthUser
+where
+    JwtConfig: FromRef<S>,
+    S: Sync,
+{
+    type Rejection = ApiError;
+
+    fn from_request_parts(
+        parts: &mut Parts,
+        state: &S,
+    ) -> impl Future<Output = Result<Self, Self::Rejection>> {
+        ready(Self::extract(parts, state))
     }
 }
 
