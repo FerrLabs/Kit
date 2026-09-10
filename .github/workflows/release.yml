@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   release:
-    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@15286b37e14c898251a98ea18d21b69ab0bf777f # main
+    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@84f44470a9ff640ea8bb32efc74d45f912660d71 # main
     with:
       dry-run: ${{ inputs.dry_run || false }}
       trigger-renovate: true
