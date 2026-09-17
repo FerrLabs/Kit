@@ -23,7 +23,6 @@ jobs:
     uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@84f44470a9ff640ea8bb32efc74d45f912660d71 # main
     with:
       dry-run: ${{ inputs.dry_run || false }}
-      trigger-renovate: true
       # ferrflow.json sets deferPublish: true — publish runs as a separate,
       # re-runnable job so a flaky Kellnr publish (index lag) doesn't leave a
       # crate tagged-but-unpublished.
