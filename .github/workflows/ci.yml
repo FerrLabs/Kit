@@ -10,7 +10,7 @@ on:
 jobs:
   ferrflow-order:
     name: ferrflow.json order
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && 'ferrlabs-k8s-light' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: python3 scripts/check-ferrflow-order.py
