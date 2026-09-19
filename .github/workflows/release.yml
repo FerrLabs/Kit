@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   release:
-    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@f9fac3f7da330dd0136172ac5435f3cfccb809a7 # main
+    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@c3212b1ccc78233fd9fec4f87128906c82c79995 # main
     with:
       dry-run: ${{ inputs.dry_run || false }}
       # ferrflow.json sets deferPublish: true — publish runs as a separate,
