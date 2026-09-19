@@ -17,8 +17,8 @@ metrics = ["dep:prometheus", "dep:axum", "dep:tokio"]
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
 opentelemetry = { workspace = true }
-opentelemetry_sdk = "0.32"
-opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
+opentelemetry_sdk = "0.33"
+opentelemetry-otlp = { version = "0.33", features = ["grpc-tonic"] }
 tracing-opentelemetry = "0.33"
 anyhow = { workspace = true }
 
