@@ -6,3 +6,6 @@ Cargo.lock.backup
 .DS_Store
 
 .claude/
+
+# git worktrees created beside the repo
+/*-wt-*/
