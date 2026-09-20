@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 description = "Date-based API contract versioning: negotiate a version per request and render older shapes to older clients"
+readme = "README.md"
+keywords = ["axum", "versioning", "api", "http", "middleware"]
+categories = ["web-programming::http-server"]
 
 [dependencies]
 axum = { workspace = true }

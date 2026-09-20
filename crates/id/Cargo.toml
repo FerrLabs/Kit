@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 description = "Typed id newtypes over UUID to turn cross-tenant/IDOR mistakes into compile errors"
+readme = "README.md"
+keywords = ["uuid", "newtype", "identifier", "type-safety"]
+categories = ["data-structures", "rust-patterns"]
 
 [features]
 default = []

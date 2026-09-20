@@ -6,7 +6,10 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "Safe outbound HTTP client for FerrLabs APIs. SSRF defenses (IP allowlist, DNS pinning, manual redirect re-checks), bounded body and total deadline."
+description = "Outbound HTTP client with SSRF defenses: resolved-IP allowlist, DNS pinning, revalidated redirects, bounded body and total deadline"
+readme = "README.md"
+keywords = ["ssrf", "http", "security", "client", "reqwest"]
+categories = ["web-programming::http-client", "network-programming"]
 
 [dependencies]
 reqwest = { workspace = true }
