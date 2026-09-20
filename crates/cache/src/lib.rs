@@ -1,8 +1,14 @@
 //! Shared Valkey (Redis-compatible) connection pool for FerrLabs APIs.
 //!
 //! Mirrors `ferrlabs-db`: config-from-env plus a `connect` factory that returns
-//! an initialised `fred` pool. Consumers run commands against `fred` directly —
+//! a `fred` pool that reconnects on its own. A server that is unreachable at
+//! startup does not fail `connect`: the pool keeps retrying in the background,
+//! and commands time out after one second in the meantime, so callers degrade
+//! instead of hanging. Misconfiguration (TLS, auth, URL) still fails `connect`.
+//! Consumers run commands against `fred` directly —
 //! it is re-exported here so they don't take a separate `fred` dependency.
+
+use std::time::Duration;
 
 use fred::prelude::*;
 
@@ -121,6 +127,11 @@ impl CacheConfig {
 
 pub type CachePool = Pool;
 
+const RECONNECT_MIN_DELAY_MS: u32 = 100;
+const RECONNECT_MAX_DELAY_MS: u32 = 30_000;
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(1);
+const INITIAL_CONNECT_WAIT: Duration = Duration::from_secs(5);
+
 /// Percent-encode the `user`/`password` portion of a `redis://`/`rediss://`
 /// URL's userinfo so that URL-breaking characters (`/`, `+`, `=`, `@`, `:`,
 /// `%`, ...) in a raw password — e.g. a base64-generated Valkey password —
@@ -213,6 +224,29 @@ fn rustls_config_with_ca(ca_cert_path: &str) -> anyhow::Result<fred::rustls::Cli
         .with_no_client_auth())
 }
 
+const TRANSIENT_IO_ERRORS: &[&str] = &[
+    "ConnectionRefused",
+    "ConnectionReset",
+    "ConnectionAborted",
+    "TimedOut",
+    "HostUnreachable",
+    "NetworkUnreachable",
+    "NotConnected",
+    "BrokenPipe",
+    "UnexpectedEof",
+    "failed to lookup address",
+];
+
+fn is_transient(error: &Error) -> bool {
+    match error.kind() {
+        ErrorKind::Timeout | ErrorKind::Canceled => true,
+        ErrorKind::IO => TRANSIENT_IO_ERRORS
+            .iter()
+            .any(|kind| error.details().contains(kind)),
+        _ => false,
+    }
+}
+
 pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
     let sanitized_url = percent_encode_userinfo(&config.url);
     let mut cfg =
@@ -235,17 +269,52 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
         // via `TlsConnector::default_rustls()`), still with full verification.
     }
 
-    let pool = Pool::new(cfg, None, None, None, config.pool_size)
-        .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))?;
+    let performance = PerformanceConfig {
+        default_command_timeout: COMMAND_TIMEOUT,
+        ..PerformanceConfig::default()
+    };
+    let reconnect =
+        ReconnectPolicy::new_exponential(0, RECONNECT_MIN_DELAY_MS, RECONNECT_MAX_DELAY_MS, 2);
+    let build = |cfg: Config| {
+        Pool::new(
+            cfg,
+            Some(performance.clone()),
+            None,
+            Some(reconnect.clone()),
+            config.pool_size,
+        )
+        .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))
+    };
+
+    let probe = build(cfg.clone())?;
+    let _handle = probe.connect();
+    match tokio::time::timeout(INITIAL_CONNECT_WAIT, probe.wait_for_connect()).await {
+        Ok(Ok(())) => {
+            tracing::info!(
+                pool_size = config.pool_size,
+                tls = tls_enabled,
+                "connected to Valkey"
+            );
+            return Ok(probe);
+        }
+        Ok(Err(e)) if !is_transient(&e) => {
+            let _ = probe.quit().await;
+            return Err(anyhow::anyhow!("Valkey connect failed: {e}"));
+        }
+        Ok(Err(e)) => tracing::warn!(
+            error = %e,
+            "Valkey unreachable at startup, reconnecting in the background"
+        ),
+        Err(_) => tracing::warn!(
+            wait_secs = INITIAL_CONNECT_WAIT.as_secs(),
+            "Valkey not connected yet, reconnecting in the background"
+        ),
+    }
+
+    let _ = probe.quit().await;
+    cfg.fail_fast = false;
+    let pool = build(cfg)?;
     let _handle = pool.connect();
-    pool.wait_for_connect()
-        .await
-        .map_err(|e| anyhow::anyhow!("Valkey connect failed: {e}"))?;
-    tracing::info!(
-        pool_size = config.pool_size,
-        tls = tls_enabled,
-        "connected to Valkey"
-    );
     Ok(pool)
 }
 
@@ -775,5 +844,104 @@ mod tests {
             );
         }
         assert!(rendered.contains("<redacted>"), "got: {rendered}");
+    }
+
+    fn unreachable_config() -> CacheConfig {
+        CacheConfig {
+            url: "redis://127.0.0.1:1".to_string(),
+            pool_size: 2,
+            ca_cert_path: None,
+            password: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn connect_returns_a_pool_when_valkey_is_unreachable() {
+        let started = std::time::Instant::now();
+        let pool = connect(&unreachable_config()).await;
+        assert!(
+            pool.is_ok(),
+            "connect must not fail on an unreachable server"
+        );
+        assert!(
+            started.elapsed() <= INITIAL_CONNECT_WAIT + Duration::from_secs(2),
+            "connect waited {:?}",
+            started.elapsed()
+        );
+    }
+
+    #[tokio::test]
+    async fn pool_keeps_retrying_after_an_unreachable_startup() {
+        let pool = connect(&unreachable_config()).await.expect("pool");
+
+        let second = pool
+            .connect()
+            .await
+            .expect("the connection task must not panic")
+            .expect_err("a live router task refuses a second connect");
+
+        assert_eq!(
+            second.kind(),
+            &ErrorKind::Config,
+            "expected the router task to still hold the command channel, got: {second}"
+        );
+        assert!(
+            second.details().contains("already running"),
+            "expected the router task to still hold the command channel, got: {second}"
+        );
+    }
+
+    #[tokio::test]
+    async fn swr_loads_directly_within_the_command_timeout_when_valkey_is_down() {
+        let pool = connect(&unreachable_config()).await.expect("pool");
+        let swr = Swr {
+            pool: &pool,
+            key: "test:unreachable",
+            fresh_ttl: Duration::from_secs(30),
+            hard_ttl: Duration::from_secs(300),
+            lock_ttl: Duration::from_secs(30),
+            bypass: false,
+        };
+        let started = std::time::Instant::now();
+        let value: u32 = swr
+            .get_or_load(|| async { Ok(42) })
+            .await
+            .expect("loader value");
+        assert_eq!(value, 42);
+        assert!(
+            started.elapsed() <= COMMAND_TIMEOUT * 3,
+            "fallback took {:?}",
+            started.elapsed()
+        );
+    }
+
+    #[test]
+    fn network_failures_are_transient() {
+        for kind in [
+            std::io::ErrorKind::ConnectionRefused,
+            std::io::ErrorKind::TimedOut,
+            std::io::ErrorKind::ConnectionReset,
+        ] {
+            assert!(
+                is_transient(&Error::from(std::io::Error::from(kind))),
+                "{kind:?}"
+            );
+        }
+        assert!(is_transient(&Error::new(ErrorKind::Timeout, "timed out")));
+    }
+
+    #[test]
+    fn misconfiguration_is_not_transient() {
+        let bad_certificate = std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            fred::rustls::Error::InvalidCertificate(fred::rustls::CertificateError::UnknownIssuer),
+        );
+        assert!(!is_transient(&Error::from(bad_certificate)));
+        assert!(!is_transient(&Error::new(ErrorKind::Auth, "WRONGPASS")));
+        assert!(!is_transient(&Error::new(
+            ErrorKind::Tls,
+            "invalid configuration"
+        )));
+        assert!(!is_transient(&Error::new(ErrorKind::Url, "invalid url")));
     }
 }
