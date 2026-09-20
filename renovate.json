@@ -5,10 +5,25 @@
   ],
   "packageRules": [
     {
-      "description": "tracing-opentelemetry decides which opentelemetry these crates can use: 0.33.0, the newest, requires opentelemetry ^0.32. Bumping the monorepo alone stops the telemetry crate compiling (SdkTracer no longer satisfies the Tracer bound it needs), so the cap goes with the bridge. Lift both together the day tracing-opentelemetry supports 0.33.",
-      "matchManagers": ["cargo"],
-      "matchPackageNames": ["opentelemetry", "opentelemetry_sdk", "opentelemetry-otlp", "opentelemetry-semantic-conventions", "opentelemetry-http", "opentelemetry-proto"],
-      "allowedVersions": "<0.33"
+      "description": "`testcontainers-modules` re-exports `testcontainers` types, so the two have to move together or the resolver fails outright. Group them into one PR.",
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchPackageNames": [
+        "testcontainers",
+        "testcontainers-modules"
+      ],
+      "groupName": "testcontainers"
+    },
+    {
+      "description": "`testcontainers-modules` 0.15 depends on `testcontainers ^0.27`, and no release of it accepts 0.28 yet. Bumping `testcontainers` alone gives `failed to select a version for testcontainers`. Drop this cap once a `testcontainers-modules` release targets 0.28.",
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchPackageNames": [
+        "testcontainers"
+      ],
+      "allowedVersions": "<0.28"
     }
   ]
 }
