@@ -9,6 +9,18 @@
       "matchManagers": ["cargo"],
       "matchPackageNames": ["opentelemetry", "opentelemetry_sdk", "opentelemetry-otlp", "opentelemetry-semantic-conventions", "opentelemetry-http", "opentelemetry-proto"],
       "allowedVersions": "<0.33"
+    },
+    {
+      "description": "testcontainers-modules re-exports testcontainers types, so the two have to move together or the resolver fails outright. Group them into one PR.",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["testcontainers", "testcontainers-modules"],
+      "groupName": "testcontainers"
+    },
+    {
+      "description": "testcontainers-modules 0.15 depends on testcontainers ^0.27, and no release of it accepts 0.28 yet. Bumping testcontainers alone gives `failed to select a version for testcontainers`. Drop this cap once a testcontainers-modules release targets 0.28.",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["testcontainers"],
+      "allowedVersions": "<0.28"
     }
   ]
 }
