@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 description = "Token-bucket rate limiting and trusted-proxy client-IP extraction"
+readme = "README.md"
+keywords = ["rate-limiting", "token-bucket", "axum", "ip"]
+categories = ["web-programming", "algorithms"]
 
 [dependencies]
 dashmap = { workspace = true }

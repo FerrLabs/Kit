@@ -99,14 +99,14 @@ ferrlabs-permissions = { path = "crates/permissions", version = "2.5.1", registr
 ferrlabs-queue = { path = "crates/queue", version = "2.1.1", registry = "kellnr" }
 ferrlabs-telemetry = { path = "crates/telemetry", version = "1.0.0", registry = "kellnr" }
 ferrlabs-vault = { path = "crates/vault", version = "2.0.0", registry = "kellnr" }
-ferrlabs-http = { path = "crates/http", version = "2.0.0", registry = "kellnr" }
+ferrlabs-http = { path = "crates/http", version = "2.0.0" }
 ferrlabs-testkit = { path = "crates/testkit", version = "1.0.0", registry = "kellnr" }
-ferrlabs-id = { path = "crates/id", version = "2.0.0", registry = "kellnr" }
+ferrlabs-id = { path = "crates/id", version = "2.0.0" }
 ferrlabs-license = { path = "crates/license", version = "1.0.0", registry = "kellnr" }
-ferrlabs-ratelimit = { path = "crates/ratelimit", version = "2.0.0", registry = "kellnr" }
+ferrlabs-ratelimit = { path = "crates/ratelimit", version = "2.0.0" }
 ferrlabs-webhooks = { path = "crates/webhooks", version = "2.0.0", registry = "kellnr" }
 ferrlabs-audit = { path = "crates/audit", version = "2.0.0", registry = "kellnr" }
-ferrlabs-api-version = { path = "crates/api-version", version = "1.0.0", registry = "kellnr" }
+ferrlabs-api-version = { path = "crates/api-version", version = "1.0.0" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
