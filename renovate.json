@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>FerrLabs/.github"
+  ],
+  "packageRules": [
+    {
+      "description": "tracing-opentelemetry decides which opentelemetry these crates can use: 0.33.0, the newest, requires opentelemetry ^0.32. Bumping the monorepo alone stops the telemetry crate compiling (SdkTracer no longer satisfies the Tracer bound it needs), so the cap goes with the bridge. Lift both together the day tracing-opentelemetry supports 0.33.",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["opentelemetry", "opentelemetry_sdk", "opentelemetry-otlp", "opentelemetry-semantic-conventions", "opentelemetry-http", "opentelemetry-proto"],
+      "allowedVersions": "<0.33"
+    }
   ]
 }
