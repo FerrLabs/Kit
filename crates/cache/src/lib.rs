@@ -275,34 +275,46 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
     };
     let reconnect =
         ReconnectPolicy::new_exponential(0, RECONNECT_MIN_DELAY_MS, RECONNECT_MAX_DELAY_MS, 2);
-    let pool = Pool::new(
-        cfg,
-        Some(performance),
-        None,
-        Some(reconnect),
-        config.pool_size,
-    )
-    .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))?;
-    let _handle = pool.connect();
-    match tokio::time::timeout(INITIAL_CONNECT_WAIT, pool.wait_for_connect()).await {
-        Ok(Ok(())) => tracing::info!(
-            pool_size = config.pool_size,
-            tls = tls_enabled,
-            "connected to Valkey"
-        ),
-        Ok(Err(e)) if is_transient(&e) => tracing::warn!(
+    let build = |cfg: Config| {
+        Pool::new(
+            cfg,
+            Some(performance.clone()),
+            None,
+            Some(reconnect.clone()),
+            config.pool_size,
+        )
+        .map_err(|e| anyhow::anyhow!("failed to build Valkey pool: {e}"))
+    };
+
+    let probe = build(cfg.clone())?;
+    let _handle = probe.connect();
+    match tokio::time::timeout(INITIAL_CONNECT_WAIT, probe.wait_for_connect()).await {
+        Ok(Ok(())) => {
+            tracing::info!(
+                pool_size = config.pool_size,
+                tls = tls_enabled,
+                "connected to Valkey"
+            );
+            return Ok(probe);
+        }
+        Ok(Err(e)) if !is_transient(&e) => {
+            let _ = probe.quit().await;
+            return Err(anyhow::anyhow!("Valkey connect failed: {e}"));
+        }
+        Ok(Err(e)) => tracing::warn!(
             error = %e,
             "Valkey unreachable at startup, reconnecting in the background"
         ),
-        Ok(Err(e)) => {
-            let _ = pool.quit().await;
-            return Err(anyhow::anyhow!("Valkey connect failed: {e}"));
-        }
         Err(_) => tracing::warn!(
             wait_secs = INITIAL_CONNECT_WAIT.as_secs(),
             "Valkey not connected yet, reconnecting in the background"
         ),
     }
+
+    let _ = probe.quit().await;
+    cfg.fail_fast = false;
+    let pool = build(cfg)?;
+    let _handle = pool.connect();
     Ok(pool)
 }
 
@@ -855,6 +867,27 @@ mod tests {
             started.elapsed() <= INITIAL_CONNECT_WAIT + Duration::from_secs(2),
             "connect waited {:?}",
             started.elapsed()
+        );
+    }
+
+    #[tokio::test]
+    async fn pool_keeps_retrying_after_an_unreachable_startup() {
+        let pool = connect(&unreachable_config()).await.expect("pool");
+
+        let second = pool
+            .connect()
+            .await
+            .expect("the connection task must not panic")
+            .expect_err("a live router task refuses a second connect");
+
+        assert_eq!(
+            second.kind(),
+            &ErrorKind::Config,
+            "expected the router task to still hold the command channel, got: {second}"
+        );
+        assert!(
+            second.details().contains("already running"),
+            "expected the router task to still hold the command channel, got: {second}"
         );
     }
 
