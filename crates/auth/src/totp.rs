@@ -24,11 +24,11 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use ferrlabs_crypto::SharedKeyProvider;
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
-use totp_rs::{Algorithm, TOTP};
+use totp_rs::{Algorithm, Builder, Totp};
 
-const TOTP_DIGITS: usize = 6;
+const TOTP_DIGITS: u8 = 6;
 const TOTP_STEP_SECS: u64 = 30;
-const TOTP_SKEW: u8 = 1;
+const TOTP_SKEW: u16 = 1;
 const SECRET_BYTES: usize = 20;
 
 /// Default number of single-use recovery codes minted at enrollment.
@@ -76,17 +76,17 @@ impl TotpEnrollment {
         }
     }
 
-    fn totp(&self) -> Result<TOTP, TotpError> {
-        TOTP::new(
-            Algorithm::SHA1,
-            TOTP_DIGITS,
-            TOTP_SKEW,
-            TOTP_STEP_SECS,
-            self.seed.clone(),
-            Some(ISSUER.to_string()),
-            self.account.clone(),
-        )
-        .map_err(|e| TotpError::InvalidConfig(e.to_string()))
+    fn totp(&self) -> Result<Totp, TotpError> {
+        Builder::new()
+            .with_algorithm(Algorithm::SHA1)
+            .with_digits(TOTP_DIGITS)
+            .with_skew(TOTP_SKEW)
+            .with_step_duration(TOTP_STEP_SECS)
+            .with_secret(self.seed.clone())
+            .with_issuer(Some(ISSUER))
+            .with_account_name(self.account.clone())
+            .build()
+            .map_err(|e| TotpError::InvalidConfig(e.to_string()))
     }
 
     /// The `otpauth://totp/...` provisioning URI for authenticator apps.
@@ -94,7 +94,9 @@ impl TotpEnrollment {
     /// # Errors
     /// [`TotpError::InvalidConfig`] if the seed/account is rejected by totp-rs.
     pub fn provisioning_uri(&self) -> Result<String, TotpError> {
-        Ok(self.totp()?.get_url())
+        self.totp()?
+            .to_url()
+            .map_err(|e| TotpError::InvalidConfig(e.to_string()))
     }
 
     /// Envelope-encrypt the seed for storage via `key_provider`.
@@ -114,7 +116,7 @@ impl TotpEnrollment {
     /// # Errors
     /// [`TotpError::InvalidConfig`] if the seed/account is invalid.
     pub fn verify_at(&self, code: &str, unix_time: u64) -> Result<bool, TotpError> {
-        Ok(self.totp()?.check(code, unix_time))
+        Ok(self.totp()?.check(code, unix_time).is_some())
     }
 
     /// Verify a 6-digit `code` against the current system time.
@@ -135,7 +137,7 @@ impl TotpEnrollment {
     /// # Errors
     /// [`TotpError::InvalidConfig`] if the seed/account is invalid.
     pub fn current_code_at(&self, unix_time: u64) -> Result<String, TotpError> {
-        Ok(self.totp()?.generate(unix_time))
+        Ok(self.totp()?.generate(unix_time).to_string())
     }
 }
 
@@ -223,21 +225,21 @@ mod tests {
         // SHA-1, 8 digits, 30 s step. We assert against an 8-digit TOTP built
         // on that seed so the values match the published table.
         let seed = b"12345678901234567890".to_vec();
-        let totp = TOTP::new(
-            Algorithm::SHA1,
-            8,
-            1,
-            30,
-            seed,
-            Some(ISSUER.to_string()),
-            "rfc6238@example.com".to_string(),
-        )
-        .unwrap();
+        let totp = Builder::new()
+            .with_algorithm(Algorithm::SHA1)
+            .with_digits(8)
+            .with_skew(1)
+            .with_step_duration(30)
+            .with_secret(seed)
+            .with_issuer(Some(ISSUER))
+            .with_account_name("rfc6238@example.com")
+            .build()
+            .unwrap();
 
-        assert_eq!(totp.generate(59), "94287082");
-        assert_eq!(totp.generate(1_111_111_109), "07081804");
-        assert_eq!(totp.generate(1_234_567_890), "89005924");
-        assert_eq!(totp.generate(2_000_000_000), "69279037");
+        assert_eq!(totp.generate(59).to_string(), "94287082");
+        assert_eq!(totp.generate(1_111_111_109).to_string(), "07081804");
+        assert_eq!(totp.generate(1_234_567_890).to_string(), "89005924");
+        assert_eq!(totp.generate(2_000_000_000).to_string(), "69279037");
     }
 
     #[test]
