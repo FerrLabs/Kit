@@ -14,13 +14,13 @@ sqlx = { workspace = true }
 testcontainers = { workspace = true }
 testcontainers-modules = { workspace = true }
 tokio = { workspace = true }
-# Déclarée ICI et non ajoutée au Cargo.toml racine : `uuid` y figure déjà, et
-# toucher le manifeste du workspace republierait en cascade les crates qui le
-# listent dans leurs sharedPaths.
+# Declared HERE rather than added to the root Cargo.toml: `uuid` is already
+# there, and touching the workspace manifest republishes, in cascade, every
+# crate that lists it in its sharedPaths.
 uuid = { workspace = true }
-# Toutes trois déjà présentes dans workspace.dependencies (racine) pour
-# ferrlabs-api-version elle-même ; on les référence ici sans toucher au
-# Cargo.toml racine.
+# All three are already in the root workspace.dependencies for
+# ferrlabs-api-version itself; referenced here without touching the root
+# Cargo.toml.
 ferrlabs-api-version = { workspace = true, optional = true }
 http = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

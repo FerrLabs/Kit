@@ -9,9 +9,9 @@ rust-version.workspace = true
 description = "DKIM signing for outgoing mail, applied before the message reaches the relay."
 
 [dependencies]
-# Déclarée ici et non dans les dépendances du workspace : cette crate est la
-# seule à envoyer du courrier, et une entrée à la racine republierait toutes
-# les crates qui partagent ce manifeste.
+# Declared here rather than in the workspace dependencies: this is the only
+# crate that sends mail, and an entry at the root would republish every crate
+# that shares that manifest.
 lettre = { version = "0.11", default-features = false, features = ["builder", "dkim"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }

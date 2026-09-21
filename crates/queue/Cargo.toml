@@ -27,19 +27,15 @@ tokio = { workspace = true }
 async-trait = "0.1"
 serde = { workspace = true }
 uuid = { workspace = true }
-# Chemin SANS `version`, et c'est délibéré : cargo retire complètement les
-# dépendances de dev qui n'ont qu'un `path` au moment de `cargo publish`.
-# Elles ne font pas partie du contrat publié — un consommateur de
-# `ferrlabs-queue` ne compile jamais ses tests.
+# A `path` WITHOUT `version`, on purpose: cargo strips dev-dependencies that
+# only have a `path` at `cargo publish` time. They are not part of the
+# published contract, and a consumer of `ferrlabs-queue` never builds its
+# tests.
 #
-# Avec un `version`, la dépendance entre dans le manifeste publié et exige que
-# le registre porte déjà cette version : la release du 2026-08-05 a échoué là,
-# `ferrlabs-testkit` venant d'être publiée quelques secondes plus tôt dans le
-# même lot, sans que l'index Kellnr ait suivi.
-#
-# `{ workspace = true }` n'est pas une option : l'entrée du `Cargo.toml` racine
-# est restée épinglée à `1.0.0` alors que la crate est en 2.2.1, et toucher ce
-# fichier republierait une dizaine de crates via `sharedPaths`.
+# With a `version`, the dependency lands in the published manifest and
+# requires the registry to already carry that version. The 2026-08-05 release
+# failed exactly there: `ferrlabs-testkit` had been published seconds earlier
+# in the same batch and the index had not caught up.
 ferrlabs-testkit = { path = "../testkit" }
 
 [features]
