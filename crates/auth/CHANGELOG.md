@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.2] - 2026-09-21
+
+### Bug Fixes
+
+- fix(deps): update rust crate totp-rs to v6 (#199)
+
 ## [2.6.1] - 2026-09-07
 
 ### Bug Fixes
