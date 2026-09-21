@@ -17,8 +17,8 @@ Written once here, consumed everywhere, never copy-pasted between products.
 
 ## Crates
 
-21 crates, all real code in production use. Versions are independent, published to the
-private Kellnr registry.
+23 crates, all real code in production use. Versions are independent, each published to
+crates.io.
 
 ### Platform
 
@@ -64,24 +64,21 @@ private Kellnr registry.
 
 ## Consumption
 
-Crates are published to the private Kellnr registry, not crates.io:
+Every crate is published to [crates.io](https://crates.io/search?q=ferrlabs-) under MPL-2.0:
 
 ```toml
 [dependencies]
-ferrlabs-auth   = { version = "2.2.1", registry = "kellnr" }
-ferrlabs-db     = { version = "2.2.1", registry = "kellnr" }
-ferrlabs-errors = { version = "2.2.1", registry = "kellnr" }
+ferrlabs-auth   = "2"
+ferrlabs-db     = "2"
+ferrlabs-errors = "2"
 ```
 
 Consumed by the FerrVault, FerrTrack, FerrGrowth, FerrFleet, FerrLens and FerrLabs-Cloud APIs.
-FerrGames is the exception and depends on none of it, by design: its gameplay is stateful and
-real-time over WebSocket, which does not fit a stateless REST backend.
+FerrGames takes leaf crates only (`api-version`, `mail`) and none of the shared identity, data
+or error model, because its gameplay is stateful and real-time over WebSocket.
 
-> [!IMPORTANT]
-> Renovate does not currently update these crates ([.github#205](https://github.com/FerrLabs/.github/issues/205)).
-> Every `ferrlabs-*` lookup comes back with no result, so a product can sit two majors behind
-> what Kit publishes without anything flagging it. Check both sides by hand before assuming a
-> gap is in the crate rather than in the pin.
+Renovate updates them through the `ferrlabs-*` rule in the shared preset. The version in a
+product's `Cargo.toml` is only a floor, so compare against its `Cargo.lock`.
 
 ## Adding to a crate
 
@@ -103,9 +100,6 @@ cargo test
 cargo clippy -- -D warnings
 cargo fmt --check
 ```
-
-Building locally needs a Kellnr token for the private registry. Without one, `cargo fmt` is the
-only command that runs, and the real gate is the `Check API` job in CI.
 
 ## License
 

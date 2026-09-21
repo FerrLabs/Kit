@@ -1,9 +1,9 @@
-//! Signature DKIM des messages sortants.
+//! DKIM signing for outgoing mail.
 //!
-//! Les relais mutualisés signent peu ou mal : OVH, par exemple, ne couvre que
-//! l'en-tête `From`, ce qui laisse le sujet et la date réécrivables sans
-//! invalider la signature. Signer dans l'application permet de choisir les
-//! en-têtes protégés et de ne plus dépendre de l'activation du fournisseur.
+//! Shared relays sign poorly or not at all: OVH, for instance, only covers the
+//! `From` header, which leaves the subject and the date rewritable without
+//! breaking the signature. Signing in the application lets you choose which
+//! headers are protected, and stops depending on the provider enabling it.
 //!
 //! ```no_run
 //! use ferrlabs_mail::DkimSigner;
@@ -18,13 +18,12 @@
 //! # Ok::<(), ferrlabs_mail::DkimError>(())
 //! ```
 //!
-//! # Publication de la clé
+//! # Publishing the key
 //!
-//! La clé publique se publie en TXT sur `<selector>._domainkey.<domain>`, au
-//! format `v=DKIM1; k=rsa; p=<base64 de la clé publique DER>`. Plusieurs
-//! sélecteurs coexistent sans conflit : celui du fournisseur peut rester en
-//! place, un message accepte plusieurs signatures et DMARC se contente d'une
-//! seule qui s'aligne.
+//! The public key goes in a TXT record at `<selector>._domainkey.<domain>`, as
+//! `v=DKIM1; k=rsa; p=<base64 of the DER public key>`. Several selectors
+//! coexist without conflict: the provider's own can stay in place, a message
+//! accepts several signatures, and DMARC only needs one that aligns.
 
 use std::env;
 
@@ -35,53 +34,50 @@ use lettre::message::dkim::{
 };
 use lettre::message::header::HeaderName;
 
-/// En-têtes couverts par la signature.
+/// Headers covered by the signature.
 ///
-/// `From` est le seul strictement exigé, mais le laisser seul autorise la
-/// réécriture du sujet, de la date et du destinataire sans casser la
-/// signature. Les quatre ensemble protègent ce qu'un lecteur voit du message.
+/// `From` is the only one strictly required, but signing it alone lets the
+/// subject, the date and the recipient be rewritten without breaking the
+/// signature. The four together protect what a reader actually sees.
 ///
-/// `Message-ID` en est volontairement absent. `MessageBuilder::build` insère
-/// `Date` quand elle manque, mais ne génère jamais de `Message-ID` : il faut
-/// l'avoir posé soi-même. Or annoncer dans `h=` un en-tête que le message ne
-/// porte pas est du null-signing, ce que la RFC 6376 §5.4 définit comme le
-/// mécanisme **interdisant** son ajout ultérieur. Le relais qui pose le
-/// `Message-ID` manquant — ce que fait à peu près tout MSA — invaliderait donc
-/// la signature, produisant exactement le `dkim=fail` que cette crate existe
-/// pour éviter.
+/// `Message-ID` is left out on purpose. `MessageBuilder::build` inserts `Date`
+/// when it is missing but never generates a `Message-ID`, so the caller has to
+/// set it. Declaring in `h=` a header the message does not carry is
+/// null-signing, which RFC 6376 section 5.4 defines as the mechanism that
+/// **forbids** adding it later. The relay that fills in the missing
+/// `Message-ID`, as nearly every MSA does, would then break the signature and
+/// produce exactly the `dkim=fail` this crate exists to avoid.
 ///
-/// Il pourra revenir le jour où un appelant garantit l'en-tête avant de
-/// signer.
+/// It can come back once a caller guarantees the header before signing.
 const SIGNED_HEADERS: [&str; 4] = ["From", "To", "Subject", "Date"];
 
 #[derive(Debug, thiserror::Error)]
 pub enum DkimError {
     #[error(
-        "la clé privée DKIM doit être au format PKCS#1 (`BEGIN RSA PRIVATE KEY`) ; \
-         convertir une clé PKCS#8 avec `openssl rsa -in cle.pem -traditional`"
+        "the DKIM private key must be PKCS#1 (`BEGIN RSA PRIVATE KEY`); \
+         convert a PKCS#8 key with `openssl rsa -in key.pem -traditional`"
     )]
     KeyFormat,
-    #[error("configuration DKIM incomplète : {0} est absent alors que les autres sont définis")]
+    #[error("incomplete DKIM configuration: {0} is missing while the others are set")]
     Incomplete(&'static str),
 }
 
-/// Signataire construit une fois au démarrage et réutilisé pour chaque message.
+/// Signer built once at startup and reused for every message.
 ///
-/// Volontairement sans `Debug` : la structure détient la clé privée, et une
-/// clé qui peut atteindre un log est une clé à renouveler.
+/// Deliberately not `Debug`: it holds the private key, and a key that can reach
+/// a log is a key that has to be rotated.
 pub struct DkimSigner {
     config: DkimConfig,
 }
 
 impl DkimSigner {
-    /// Lit `MAIL_DKIM_PRIVATE_KEY`, `MAIL_DKIM_SELECTOR` et `MAIL_DKIM_DOMAIN`.
+    /// Reads `MAIL_DKIM_PRIVATE_KEY`, `MAIL_DKIM_SELECTOR` and `MAIL_DKIM_DOMAIN`.
     ///
-    /// Renvoie `Ok(None)` quand aucune des trois n'est définie : une
-    /// application qui n'a pas encore de clé continue d'envoyer sans signer,
-    /// ce qui vaut mieux que de refuser de démarrer. En revanche une
-    /// configuration partielle est une erreur, parce qu'elle traduit presque
-    /// toujours une variable oubliée au déploiement et se solderait sinon par
-    /// des messages non signés sans que personne ne le remarque.
+    /// Returns `Ok(None)` when none of the three is set: an application that
+    /// has no key yet keeps sending unsigned, which beats refusing to start. A
+    /// partial configuration is an error, because it almost always means a
+    /// variable forgotten at deploy time, and would otherwise end in unsigned
+    /// mail that nobody notices.
     pub fn from_env() -> Result<Option<Self>, DkimError> {
         let key = env::var("MAIL_DKIM_PRIVATE_KEY")
             .ok()
@@ -93,7 +89,7 @@ impl DkimSigner {
 
         match (key, selector, domain) {
             (None, None, None) => {
-                tracing::info!("DKIM non configuré, les messages partiront non signés");
+                tracing::info!("DKIM not configured, messages will be sent unsigned");
                 Ok(None)
             }
             (Some(key), Some(selector), Some(domain)) => {
@@ -109,7 +105,7 @@ impl DkimSigner {
         }
     }
 
-    /// `key` est une clé RSA privée au format PEM PKCS#1.
+    /// `key` is an RSA private key, PEM-encoded PKCS#1.
     pub fn new(key: &str, selector: String, domain: String) -> Result<Self, DkimError> {
         let key = DkimSigningKey::new(key, DkimSigningAlgorithm::Rsa)
             .map_err(|_| DkimError::KeyFormat)?;
@@ -119,11 +115,11 @@ impl DkimSigner {
             .map(|name| HeaderName::new_from_ascii_str(name))
             .collect();
 
-        // `relaxed/relaxed`, jamais `DkimConfig::default_config`, qui applique
-        // `simple` aux en-têtes : dans ce mode le moindre repli de ligne
-        // réappliqué par un relais invalide la signature, et un `dkim=fail`
-        // est plus dommageable qu'une absence de signature. Vérifié contre le
-        // relais mutualisé d'OVH : `simple` échoue, `relaxed` passe.
+        // `relaxed/relaxed`, never `DkimConfig::default_config`, which applies
+        // `simple` to headers: in that mode any line refolding a relay does
+        // breaks the signature, and a `dkim=fail` does more harm than no
+        // signature at all. Checked against OVH's shared relay: `simple`
+        // fails, `relaxed` passes.
         let canonicalization = DkimCanonicalization {
             header: DkimCanonicalizationType::Relaxed,
             body: DkimCanonicalizationType::Relaxed,
@@ -134,10 +130,10 @@ impl DkimSigner {
         })
     }
 
-    /// Ajoute l'en-tête `DKIM-Signature` au message.
+    /// Adds the `DKIM-Signature` header to the message.
     ///
-    /// À appeler en dernier, une fois tous les en-têtes signés posés : signer
-    /// puis modifier `Subject` ou `Date` produirait une signature invalide.
+    /// Call it last, once every signed header is set: signing and then changing
+    /// `Subject` or `Date` produces an invalid signature.
     pub fn sign(&self, message: &mut Message) {
         message.sign(&self.config);
     }
@@ -147,15 +143,15 @@ impl DkimSigner {
 mod tests {
     use super::*;
 
-    /// Clé de test, sans valeur : générée pour ce fichier et publiée avec lui.
+    /// Throwaway test key, generated for this file and published with it.
     const TEST_KEY: &str = include_str!("../tests/testing.key");
 
     fn message() -> Message {
         Message::builder()
-            .from("Expediteur <expediteur@example.com>".parse().unwrap())
-            .to("destinataire@example.org".parse().unwrap())
-            .subject("Sujet")
-            .body(String::from("Corps du message.\n"))
+            .from("Sender <sender@example.com>".parse().unwrap())
+            .to("recipient@example.org".parse().unwrap())
+            .subject("Subject")
+            .body(String::from("Message body.\n"))
             .unwrap()
     }
 
@@ -175,28 +171,28 @@ mod tests {
         signer.sign(&mut message);
 
         let header = signed_header(&message);
-        assert!(header.contains("c=relaxed/relaxed"), "en-tête : {header}");
+        assert!(header.contains("c=relaxed/relaxed"), "header: {header}");
     }
 
-    /// Chaque en-tête déclaré dans `h=` doit exister DANS le message.
+    /// Every header declared in `h=` must exist IN the message.
     ///
-    /// C'est la vérification qui manquait : `covers_every_declared_header` lit
-    /// la liste annoncée sans regarder le message, donc il passait sur un
-    /// `Message-ID` que `lettre` ne génère pas. Annoncer un en-tête absent est
-    /// du null-signing, et la RFC 6376 §5.4 en fait le mécanisme interdisant
-    /// son ajout ultérieur : le relais qui le pose casse la signature.
+    /// This is the check that was missing: `covers_every_declared_header` reads
+    /// the declared list without looking at the message, so it passed on a
+    /// `Message-ID` that `lettre` never generates. Declaring an absent header is
+    /// null-signing, and RFC 6376 section 5.4 makes it the mechanism that
+    /// forbids adding it later: the relay that sets it breaks the signature.
     #[test]
-    fn chaque_entete_declare_existe_dans_le_message() {
+    fn every_declared_header_exists_in_the_message() {
         let message = message();
-        let brut = String::from_utf8(message.formatted())
+        let raw = String::from_utf8(message.formatted())
             .unwrap()
             .to_lowercase();
         for name in SIGNED_HEADERS {
             assert!(
-                brut.contains(&format!("\n{}:", name.to_lowercase()))
-                    || brut.starts_with(&format!("{}:", name.to_lowercase())),
-                "`{name}` est signé mais absent du message : signature invalidée \
-                 dès qu'un relais l'ajoutera"
+                raw.contains(&format!("\n{}:", name.to_lowercase()))
+                    || raw.starts_with(&format!("{}:", name.to_lowercase())),
+                "`{name}` is signed but missing from the message: the signature \
+                 breaks as soon as a relay adds it"
             );
         }
     }
@@ -211,7 +207,7 @@ mod tests {
         for name in SIGNED_HEADERS {
             assert!(
                 header.contains(&name.to_lowercase()),
-                "{name} absent de la liste signée : {header}"
+                "{name} missing from the signed list: {header}"
             );
         }
     }
@@ -223,8 +219,8 @@ mod tests {
         signer.sign(&mut message);
 
         let header = signed_header(&message);
-        assert!(header.contains("s=sel1"), "en-tête : {header}");
-        assert!(header.contains("d=example.com"), "en-tête : {header}");
+        assert!(header.contains("s=sel1"), "header: {header}");
+        assert!(header.contains("d=example.com"), "header: {header}");
     }
 
     #[test]
@@ -232,7 +228,7 @@ mod tests {
         let pkcs8 = "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----\n";
         let error = DkimSigner::new(pkcs8, "test".into(), "example.com".into())
             .err()
-            .expect("une clé PKCS#8 doit être refusée");
+            .expect("a PKCS#8 key must be rejected");
         assert!(matches!(error, DkimError::KeyFormat));
         assert!(error.to_string().contains("traditional"));
     }

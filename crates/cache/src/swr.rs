@@ -46,7 +46,7 @@ impl Swr<'_> {
         Ok(())
     }
 
-    /// `SET lock NX PX lock_ttl` — true si on a acquis le verrou.
+    /// `SET lock NX PX lock_ttl`, true when the lock was acquired.
     async fn try_lock(&self, lock_key: &str) -> bool {
         // lock_ttl is caller-configured and expected to be a small, sane duration
         // (seconds-to-minutes range), far below i64::MAX milliseconds.
@@ -82,11 +82,11 @@ impl Swr<'_> {
             return Ok(v);
         }
 
-        // Lecture ; toute erreur Valkey => dégrade en load inline.
+        // Read; any Valkey error degrades to an inline load.
         let raw: Option<String> = match self.pool.get(self.key).await {
             Ok(v) => v,
             Err(e) => {
-                tracing::warn!(error = %e, key = self.key, "Valkey GET échoué, load direct");
+                tracing::warn!(error = %e, key = self.key, "Valkey GET failed, loading directly");
                 return (loader)().await;
             }
         };
@@ -97,10 +97,10 @@ impl Swr<'_> {
             if let Ok(env) = serde_json::from_str::<Envelope<T>>(&raw) {
                 let age = Duration::from_millis(now_ms().saturating_sub(env.ts_ms));
                 if age < self.fresh_ttl {
-                    return Ok(env.payload); // frais
+                    return Ok(env.payload); // fresh
                 }
-                // stale : sert l'ancien immédiatement, rafraîchit en fond
-                // (single-flight cluster-wide via lock Valkey).
+                // stale: serve the old value now, refresh in the background
+                // (cluster-wide single-flight through a Valkey lock).
                 spawn_refresh::<T, F, Fut>(
                     self.pool.clone(),
                     self.key.to_string(),
@@ -113,12 +113,12 @@ impl Swr<'_> {
             }
         }
 
-        // miss : single-flight. Le gagnant du lock charge et stocke ; les
-        // perdants attendent brièvement (poll) que la valeur apparaisse,
-        // sinon rechargent en dernier recours (jamais d'attente infinie).
+        // miss: single-flight. The lock winner loads and stores; the losers
+        // poll briefly for the value to appear, and load themselves as a
+        // last resort (never an unbounded wait).
         if self.try_lock(&lock_key).await {
-            // Libère le lock que le loader réussisse OU échoue, sinon il fuit
-            // pendant tout lock_ttl et bloque les lecteurs concurrents.
+            // Release the lock whether the loader succeeds OR fails, otherwise it
+            // leaks for the whole lock_ttl and blocks concurrent readers.
             return match (loader)().await {
                 Ok(v) => {
                     let _ = self.store(&v).await;
@@ -146,16 +146,16 @@ impl Swr<'_> {
             }
         }
 
-        // Dernier recours : le détenteur du verrou n'a pas fini à temps.
+        // Last resort: the lock holder did not finish in time.
         let v = (loader)().await?;
         let _ = self.store(&v).await;
         Ok(v)
     }
 }
 
-/// Rafraîchit `key` en fond, avec single-flight cluster-wide via `lock_key`
-/// (`SET NX PX`). Seul le gagnant du verrou recharge ; les autres renvoient
-/// immédiatement sans rien faire.
+/// Refreshes `key` in the background, with cluster-wide single-flight through
+/// `lock_key` (`SET NX PX`). Only the lock winner reloads; the others return
+/// immediately without doing anything.
 fn spawn_refresh<T, F, Fut>(
     pool: CachePool,
     key: String,
@@ -169,7 +169,7 @@ fn spawn_refresh<T, F, Fut>(
     Fut: Future<Output = anyhow::Result<T>> + Send + 'static,
 {
     tokio::spawn(async move {
-        // single-flight : seul le gagnant du lock rafraîchit.
+        // single-flight: only the lock winner refreshes.
         // lock_ttl/hard_ttl are caller-configured and expected to be small,
         // sane durations, far below i64::MAX milliseconds.
         #[allow(clippy::cast_possible_truncation)]
@@ -203,7 +203,7 @@ fn spawn_refresh<T, F, Fut>(
                         .await;
                 }
             }
-            Err(e) => tracing::warn!(error = %e, key = %key, "refresh SWR en fond échoué"),
+            Err(e) => tracing::warn!(error = %e, key = %key, "background SWR refresh failed"),
         }
         let _: Result<(), _> = pool.del(&lock_key).await;
     });
@@ -258,7 +258,7 @@ mod tests {
         assert_eq!(
             calls.load(Ordering::SeqCst),
             1,
-            "loader appelé une seule fois"
+            "loader called exactly once"
         );
     }
 
@@ -310,7 +310,7 @@ mod tests {
                 }
             }
         };
-        // fresh_ttl très court => l'entrée devient stale quasi immédiatement.
+        // very short fresh_ttl, so the entry goes stale almost immediately.
         let swr = |b: bool| Swr {
             pool: &pool,
             key,
@@ -324,10 +324,10 @@ mod tests {
             1
         ); // miss => 1 call
         tokio::time::sleep(Duration::from_millis(5)).await;
-        // 3 lectures concurrentes en stale : renvoient l'ancien, 1 SEUL refresh.
-        // (liées à des variables nommées : `swr(false)` en position d'argument
-        // inline de `tokio::join!` serait un temporaire droppé avant d'être
-        // pollé, cf. E0716.)
+        // 3 concurrent stale reads: all return the old value, ONE refresh only.
+        // (bound to named variables: `swr(false)` inline as a `tokio::join!`
+        // argument would be a temporary dropped before being polled, see
+        // E0716.)
         let (s1, s2, s3) = (swr(false), swr(false), swr(false));
         let (a, b, c) = tokio::join!(
             s1.get_or_load(mk(calls.clone(), 2)),
@@ -337,10 +337,10 @@ mod tests {
         assert_eq!(
             (a.unwrap(), b.unwrap(), c.unwrap()),
             (1, 1, 1),
-            "stale servi immédiatement"
+            "stale served immediately"
         );
-        tokio::time::sleep(Duration::from_millis(50)).await; // laisse le refresh finir
-        assert_eq!(calls.load(Ordering::SeqCst), 2, "1 miss + 1 refresh unique");
+        tokio::time::sleep(Duration::from_millis(50)).await; // let the refresh finish
+        assert_eq!(calls.load(Ordering::SeqCst), 2, "1 miss + a single refresh");
     }
 
     #[tokio::test]
@@ -357,23 +357,20 @@ mod tests {
             key,
             fresh_ttl: Duration::from_secs(60),
             hard_ttl: Duration::from_secs(120),
-            // court : même en cas de régression le poll de secours ne bloque pas trop.
+            // short: even on a regression the fallback poll does not block long.
             lock_ttl: Duration::from_secs(5),
             bypass: false,
         };
-        // miss + loader qui échoue => Err renvoyée, mais le lock DOIT être libéré.
+        // miss + failing loader: Err is returned, but the lock MUST be released.
         let err = swr()
             .get_or_load(|| async { Err::<u32, anyhow::Error>(anyhow::anyhow!("boom")) })
             .await;
-        assert!(err.is_err(), "loader échoue => Err propagée");
-        // Preuve directe : le lock single-flight ne fuit pas.
+        assert!(err.is_err(), "failing loader propagates Err");
+        // Direct proof: the single-flight lock does not leak.
         let exists: i64 = pool.exists(lock_key.as_str()).await.unwrap();
-        assert_eq!(
-            exists, 0,
-            "lock libéré après erreur du loader (pas de fuite)"
-        );
-        // Preuve indirecte : un second appel (loader OK) charge immédiatement,
-        // sans devoir attendre l'expiration de lock_ttl.
+        assert_eq!(exists, 0, "lock released after a loader error (no leak)");
+        // Indirect proof: a second call (loader OK) loads immediately, without
+        // waiting for lock_ttl to expire.
         let start = std::time::Instant::now();
         let v = swr()
             .get_or_load(|| async { Ok::<u32, anyhow::Error>(99) })
@@ -382,7 +379,7 @@ mod tests {
         assert_eq!(v, 99);
         assert!(
             start.elapsed() < Duration::from_secs(1),
-            "seconde lecture immédiate (lock non fuité)"
+            "second read is immediate (lock not leaked)"
         );
     }
 }

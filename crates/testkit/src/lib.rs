@@ -42,15 +42,15 @@ use testcontainers_modules::postgres::Postgres;
 
 static DB_SEQ: AtomicU64 = AtomicU64::new(0);
 
-/// Plafond du nettoyage au `Drop`. Volontairement court : la suppression est
-/// un confort, le GC horaire de `postgres-ci` est la vraie garantie.
+/// Upper bound on the `Drop` cleanup. Short on purpose: deleting is a
+/// convenience, the hourly GC on `postgres-ci` is the real guarantee.
 const CLEANUP_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub struct TestDb {
     pub pool: PgPool,
     _container: Option<ContainerAsync<Postgres>>,
-    /// Options d'admin + nom de la base a supprimer au `Drop`.
-    /// `None` pour le mode testcontainer : le conteneur emporte tout avec lui.
+    /// Admin options and the name of the database to drop in `Drop`.
+    /// `None` in testcontainer mode: the container takes everything with it.
     cleanup: Option<(PgConnectOptions, String)>,
 }
 
@@ -101,12 +101,11 @@ impl TestDb {
 
     async fn fresh_external(base: &str) -> Result<Self> {
         let admin = PgConnectOptions::from_str(base).context("parsing TEST_DATABASE_URL")?;
-        // Nom unique par APPEL, pas par processus. `std::process::id()` ne
-        // convient pas : chaque conteneur a son propre espace de noms PID, où
-        // les numeros repartent bas — deux runs CI tirent facilement le meme
-        // PID. Comme ces bases ne sont jamais supprimees (voir plus bas), une
-        // base d'un run precedent survit et le `CREATE DATABASE` echoue sur
-        // « database "testkit_<pid>_0" already exists ».
+        // Unique name per CALL, not per process. `std::process::id()` does
+        // not work: every container has its own PID namespace where numbers
+        // start low again, so two CI runs easily draw the same PID. When a
+        // database from an earlier run survives, `CREATE DATABASE` fails on
+        // `database "testkit_<pid>_0" already exists`.
         let db_name = format!(
             "testkit_{}_{}",
             &Uuid::new_v4().simple().to_string()[..12],
@@ -149,22 +148,22 @@ impl TestDb {
 }
 
 impl Drop for TestDb {
-    /// Supprime la base ephemere creee par `fresh_external`.
+    /// Drops the ephemeral database created by `fresh_external`.
     ///
-    /// Sans cela les bases s'accumulent indefiniment sur le serveur partage :
-    /// le GC de `postgres-ci` ne purge que les bases `ci_*` creees par le
-    /// workflow, pas les `testkit_*` creees ici. C'est ce qui a fini par
-    /// provoquer des collisions de noms en CI.
+    /// Without this, databases pile up forever on the shared server: the
+    /// `postgres-ci` GC only purges the `ci_*` databases the workflow creates,
+    /// not the `testkit_*` ones created here. That is what eventually caused
+    /// name collisions in CI.
     ///
-    /// `Drop` est synchrone et rien ne garantit qu'un runtime Tokio soit encore
-    /// actif a cet instant : on en cree un dedie sur un thread a part. Le
-    /// `join()` attend la suppression, pour qu'elle ne soit pas perdue si le
-    /// processus se termine dans la foulee.
+    /// `Drop` is synchronous and nothing guarantees a Tokio runtime is still
+    /// running at that point, so a dedicated one is built on its own thread.
+    /// The `join()` waits for the drop, so it is not lost if the process exits
+    /// right after.
     ///
-    /// `WITH (FORCE)` (Postgres 13+) ferme les connexions restantes : le pool
-    /// de `self` n'est ferme qu'apres ce `Drop`, la base serait sinon encore
-    /// consideree comme utilisee. Best-effort : une erreur ici ne doit jamais
-    /// faire echouer un test, le GC horaire reste le filet de securite.
+    /// `WITH (FORCE)` (Postgres 13+) closes the remaining connections: the
+    /// pool on `self` is only closed after this `Drop`, so the database would
+    /// otherwise still count as in use. Best-effort: an error here must never
+    /// fail a test, and the hourly GC stays the safety net.
     fn drop(&mut self) {
         let Some((admin, db_name)) = self.cleanup.take() else {
             return;
@@ -176,9 +175,9 @@ impl Drop for TestDb {
             else {
                 return;
             };
-            // Borne dure : on `join()` ce thread, donc sans timeout une
-            // connexion qui pend (DNS, reseau, serveur disparu) figerait la fin
-            // des tests. Best-effort veut dire qu'on abandonne en silence.
+            // Hard bound: this thread is `join()`ed, so without a timeout a
+            // hanging connection (DNS, network, server gone) would freeze the
+            // end of the test run. Best-effort means giving up silently.
             rt.block_on(async move {
                 let _ = tokio::time::timeout(CLEANUP_TIMEOUT, async move {
                     if let Ok(pool) = PgPoolOptions::new()
@@ -217,10 +216,10 @@ mod tests {
         assert_eq!(row.0, 1);
     }
 
-    /// Couvre le chemin `fresh_external` — celui qu'utilise la CI — et surtout
-    /// le nettoyage au `Drop`, qui est l'objet du correctif.
+    /// Covers the `fresh_external` path, the one CI uses, and above all the
+    /// `Drop` cleanup, which is what the fix was about.
     ///
-    /// Necessite un Postgres jetable accessible via `TEST_DATABASE_URL` :
+    /// Needs a disposable Postgres reachable through `TEST_DATABASE_URL`:
     ///   docker run --rm -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:17-alpine
     ///   TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres \
     ///     cargo test -p ferrlabs-testkit -- --ignored external
@@ -256,14 +255,14 @@ mod tests {
             assert_eq!(
                 count(admin_pool.clone()).await,
                 before + 1,
-                "la base ephemere doit exister pendant le test"
+                "the ephemeral database must exist during the test"
             );
-        } // <- Drop ici : la base doit disparaitre
+        } // <- Drop here: the database must go away
 
         assert_eq!(
             count(admin_pool.clone()).await,
             before,
-            "la base ephemere doit etre supprimee au Drop"
+            "the ephemeral database must be dropped in Drop"
         );
         admin_pool.close().await;
     }
