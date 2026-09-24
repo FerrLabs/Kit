@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-http` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] - 2026-09-24
+
+### Features
+
+- feat(http): add a guarded form POST for customer-supplied endpoints (#308)
+
 ## [2.0.0] - 2026-08-05
 
 ### Breaking Changes

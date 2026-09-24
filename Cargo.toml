@@ -96,7 +96,7 @@ ferrlabs-auth = { path = "crates/auth", version = "3.0.0" }
 ferrlabs-permissions = { path = "crates/permissions", version = "2.5.1" }
 ferrlabs-queue = { path = "crates/queue", version = "2.1.1" }
 ferrlabs-vault = { path = "crates/vault", version = "2.0.0" }
-ferrlabs-http = { path = "crates/http", version = "2.0.0" }
+ferrlabs-http = { path = "crates/http", version = "2.1.0" }
 ferrlabs-id = { path = "crates/id", version = "2.0.0" }
 ferrlabs-ratelimit = { path = "crates/ratelimit", version = "2.0.0" }
 ferrlabs-webhooks = { path = "crates/webhooks", version = "2.0.0" }
