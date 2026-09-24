@@ -23,7 +23,7 @@ crates.io.
 | Crate | Role |
 |---|---|
 | [`auth`](crates/auth) | JWT, sessions, password hashing (argon2id), TOTP |
-| [`oauth`](crates/oauth) | Authorization-code clients for Google, GitHub and Discord, PKCE S256 with CSRF state |
+| [`oauth`](crates/oauth) | Authorization-code clients, PKCE S256 with CSRF state: fixed providers (Google, GitHub, Discord) and per-tenant OIDC issuers discovered at runtime, with id_token validation and cached JWKS |
 | [`github`](crates/github) | GitHub App auth: scoped installation access tokens, and verifying a user actually owns the installation they are claiming |
 | [`permissions`](crates/permissions) | Typed scope and capability checks. A closed enum of every scope on the platform, so adding one is a crate change rather than a typo in a string literal |
 | [`id`](crates/id) | Typed id newtypes over UUID, turning cross-tenant and IDOR mistakes into compile errors |

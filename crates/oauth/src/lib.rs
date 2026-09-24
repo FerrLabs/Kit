@@ -26,6 +26,8 @@
 //! Products that map [`OAuthError`] onto their own error type can drop the
 //! default `errors` feature to skip the `ferrlabs-errors` dependency.
 
+pub mod oidc;
+
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
