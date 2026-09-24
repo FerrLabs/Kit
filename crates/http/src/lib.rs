@@ -29,7 +29,7 @@ use std::time::Duration;
 use reqwest::{Client, redirect};
 use thiserror::Error;
 use tokio::net::lookup_host;
-use url::Url;
+use url::{Url, form_urlencoded};
 
 #[derive(Debug, Error)]
 pub enum SafeFetchError {
@@ -169,6 +169,77 @@ pub async fn safe_get(
     }
 }
 
+pub async fn safe_post_form(
+    client: &SafeHttpClient,
+    url: &str,
+    form: &[(&str, &str)],
+    opts: &SafeFetchOpts,
+) -> Result<SafeResponse, SafeFetchError> {
+    let fut = safe_post_form_inner(client, url, form, opts);
+    match tokio::time::timeout(opts.timeout, fut).await {
+        Ok(r) => r,
+        Err(_) => Err(SafeFetchError::Timeout),
+    }
+}
+
+async fn safe_post_form_inner(
+    _client: &SafeHttpClient,
+    url: &str,
+    form: &[(&str, &str)],
+    opts: &SafeFetchOpts,
+) -> Result<SafeResponse, SafeFetchError> {
+    let parsed = Url::parse(url).map_err(|e| SafeFetchError::InvalidUrl(e.to_string()))?;
+    match parsed.scheme() {
+        "http" | "https" => {}
+        other => return Err(SafeFetchError::UnsupportedScheme(other.to_string())),
+    }
+    let host = parsed.host_str().ok_or(SafeFetchError::MissingHost)?;
+    let port = parsed
+        .port_or_known_default()
+        .ok_or(SafeFetchError::MissingHost)?;
+    let pinned = resolve_and_validate(host, port).await?;
+
+    let pinned_client = Client::builder()
+        .redirect(redirect::Policy::none())
+        .resolve(host, pinned)
+        .build()?;
+
+    let body = form_urlencoded::Serializer::new(String::new())
+        .extend_pairs(form.iter().copied())
+        .finish();
+    let resp = pinned_client
+        .post(parsed)
+        .header(
+            reqwest::header::CONTENT_TYPE,
+            "application/x-www-form-urlencoded",
+        )
+        .body(body)
+        .send()
+        .await?;
+    read_capped(resp, opts.max_body_bytes).await
+}
+
+async fn read_capped(
+    resp: reqwest::Response,
+    max_body_bytes: usize,
+) -> Result<SafeResponse, SafeFetchError> {
+    let status = resp.status().as_u16();
+    let final_url = resp.url().to_string();
+    let mut body = Vec::new();
+    let mut stream = resp;
+    while let Some(chunk) = stream.chunk().await? {
+        if body.len() + chunk.len() > max_body_bytes {
+            return Err(SafeFetchError::BodyTooLarge(max_body_bytes));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(SafeResponse {
+        status,
+        body,
+        final_url,
+    })
+}
+
 async fn safe_get_inner(
     _client: &SafeHttpClient,
     url: &str,
@@ -212,20 +283,7 @@ async fn safe_get_inner(
             continue;
         }
 
-        let final_url = resp.url().to_string();
-        let mut body = Vec::new();
-        let mut stream = resp;
-        while let Some(chunk) = stream.chunk().await? {
-            if body.len() + chunk.len() > opts.max_body_bytes {
-                return Err(SafeFetchError::BodyTooLarge(opts.max_body_bytes));
-            }
-            body.extend_from_slice(&chunk);
-        }
-        return Ok(SafeResponse {
-            status: status.as_u16(),
-            body,
-            final_url,
-        });
+        return read_capped(resp, opts.max_body_bytes).await;
     }
 }
 
@@ -366,6 +424,43 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, SafeFetchError::UnsupportedScheme(_)));
+    }
+
+    #[tokio::test]
+    async fn post_rejects_unsupported_scheme() {
+        let c = SafeHttpClient::new();
+        let err = safe_post_form(&c, "file:///etc/passwd", &[], &SafeFetchOpts::default())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, SafeFetchError::UnsupportedScheme(_)));
+    }
+
+    #[tokio::test]
+    async fn post_rejects_loopback_literal() {
+        let c = SafeHttpClient::new();
+        let err = safe_post_form(
+            &c,
+            "http://127.0.0.1/token",
+            &[("grant_type", "authorization_code")],
+            &SafeFetchOpts::default(),
+        )
+        .await
+        .unwrap_err();
+        assert!(matches!(err, SafeFetchError::BlockedAddress(_)));
+    }
+
+    #[tokio::test]
+    async fn post_rejects_the_metadata_endpoint() {
+        let c = SafeHttpClient::new();
+        let err = safe_post_form(
+            &c,
+            "http://169.254.169.254/latest/api/token",
+            &[],
+            &SafeFetchOpts::default(),
+        )
+        .await
+        .unwrap_err();
+        assert!(matches!(err, SafeFetchError::BlockedAddress(_)));
     }
 
     #[tokio::test]
