@@ -7,8 +7,6 @@
 Auth, permissions, database, errors, telemetry, billing, queues.<br />
 Written once here, consumed everywhere, never copy-pasted between products.
 
-[![Quality Gate](https://sonar.ferrlabs.com/api/project_badges/measure?project=Kit&metric=alert_status&token=sqb_2dd78d2cae70099a99721c5cdbf22eaa02f5ee4c)](https://sonar.ferrlabs.com/dashboard?id=Kit)
-[![Coverage](https://sonar.ferrlabs.com/api/project_badges/measure?project=Kit&metric=coverage&token=sqb_2dd78d2cae70099a99721c5cdbf22eaa02f5ee4c)](https://sonar.ferrlabs.com/dashboard?id=Kit)
 [![License](https://img.shields.io/badge/license-MPL--2.0-blue)](LICENSE)
 
 [FerrLabs](https://github.com/FerrLabs) | [Changelog](https://ferrlabs.com/changelog/)
