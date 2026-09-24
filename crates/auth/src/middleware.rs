@@ -22,12 +22,20 @@ use crate::jwt::{JwtConfig, verify_token};
 
 pub struct AuthUser {
     pub user_id: Uuid,
+    /// The org the caller says it is acting for, taken from the signed token.
+    ///
+    /// Authenticated, not authorized: the token keeps asserting this org for
+    /// its whole TTL, including after the membership was revoked. Re-check
+    /// membership against your own store before acting on org data.
     pub active_org: Option<Uuid>,
 }
 
 impl AuthUser {
-    /// Return the active organization, or [`ApiError::Unauthorized`] if the
-    /// caller is not acting on behalf of one.
+    /// Return the org the caller is acting for, or [`ApiError::Unauthorized`]
+    /// when the token carries none.
+    ///
+    /// This answers "which org does the caller mean", never "may the caller
+    /// touch it": pair it with a membership check.
     ///
     /// # Errors
     /// [`ApiError::Unauthorized`] when no active org is present on the token.

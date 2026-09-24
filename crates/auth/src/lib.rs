@@ -36,7 +36,7 @@ pub mod totp;
 
 pub use ferrlabs_oauth as oauth;
 pub use ferrlabs_oauth::{AuthorizeRequest, OAuthClient, OAuthError, OAuthProvider, OAuthUser};
-pub use jwt::{Claims, JwtConfig, JwtError, issue_token, verify_token};
+pub use jwt::{Claims, JwtConfig, JwtError, issue_token, issue_token_for, verify_token};
 pub use middleware::AuthUser;
 pub use password::{hash as hash_password, verify as verify_password};
 pub use session::{
