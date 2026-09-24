@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-09-24
+
+### Breaking Changes
+
+- fix(auth)!: harden JWT verification with audience, nbf and key rotation (#307)
+
 ## [2.6.2] - 2026-09-21
 
 ### Bug Fixes
