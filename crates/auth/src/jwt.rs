@@ -219,8 +219,9 @@ pub struct Claims {
 /// Issue a signed access token for a user.
 ///
 /// # Errors
-/// Returns [`JwtError::Internal`] if encoding fails (should not happen
-/// with a well-formed config).
+/// - [`JwtError::VerifyOnly`] — this config holds no signing key.
+/// - [`JwtError::Internal`] — encoding failed (should not happen with a
+///   well-formed config).
 pub fn issue_token(
     config: &JwtConfig,
     user_id: Uuid,
@@ -276,18 +277,27 @@ pub fn issue_token_for(
 /// - [`JwtError::Invalid`] — bad signature, malformed, or any other decode failure.
 pub fn verify_token(config: &JwtConfig, token: &str) -> Result<Claims, JwtError> {
     let validation = config.validation();
-    let mut first_error = None;
+    let mut best_error = None;
 
     for key in &config.decoding_keys {
         match decode::<Claims>(token, key, &validation) {
             Ok(data) => return Ok(data.claims),
-            Err(error) => first_error.get_or_insert(error),
-        };
+            Err(error) => {
+                // A key the token was not signed with can only report a bad
+                // signature. Anything else means the token decoded and a claim
+                // was refused, which is the failure the caller needs to read.
+                let claim_failure = !matches!(
+                    error.kind(),
+                    jsonwebtoken::errors::ErrorKind::InvalidSignature
+                );
+                if best_error.is_none() || claim_failure {
+                    best_error = Some(error);
+                }
+            }
+        }
     }
 
-    // Reported from the current key: a failure under it is what the caller
-    // needs to read, the rotation keys are a fallback.
-    Err(map_error(&first_error.expect(
+    Err(map_error(&best_error.expect(
         "a config always carries at least one decoding key",
     )))
 }
@@ -559,6 +569,28 @@ mod tests {
         match verify_token(&after_overlap, &token) {
             Err(JwtError::Invalid) => {}
             other => panic!("expected Invalid once the old key is dropped, got {other:?}"),
+        }
+    }
+
+    /// Every session in flight when the key rotates expires under the old key.
+    /// Reporting that as `Invalid` would log out the callers that refresh on
+    /// `Expired`, which is what the overlap exists to avoid.
+    #[test]
+    fn an_expired_token_under_the_previous_key_still_reads_as_expired() {
+        let old = generate_keypair();
+        let new = generate_keypair();
+
+        let old_signer = config_with("ferrlabs-test", Duration::from_secs(0), &old);
+        let token = issue_token(&old_signer, Uuid::new_v4(), None).unwrap();
+        std::thread::sleep(Duration::from_millis(1100));
+
+        let rotated = config_with("ferrlabs-test", DEFAULT_ACCESS_TTL, &new)
+            .with_previous_public_pem(old.1.as_bytes())
+            .unwrap();
+
+        match verify_token(&rotated, &token) {
+            Err(JwtError::Expired) => {}
+            other => panic!("expected Expired, got {other:?}"),
         }
     }
 
