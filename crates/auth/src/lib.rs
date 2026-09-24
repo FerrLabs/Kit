@@ -23,10 +23,11 @@
 //!
 //! ## Unmigrated
 //!
-//! See `_unmigrated/` for the raw ports of `jwt_middleware.rs` and `hmac.rs`
-//! from the old FerrFlow-Cloud API. They still reference a concrete
-//! `AppState` and need to be parameterised behind traits before they can
-//! be re-enabled — tracked in [Kit#4](https://github.com/FerrLabs/Kit/issues/4).
+//! The raw ports of `jwt_middleware.rs` and `hmac.rs` from the old
+//! FerrFlow-Cloud API still reference a concrete `AppState` and need to be
+//! parameterised behind traits before they can be re-enabled, tracked in
+//! [Kit#4](https://github.com/FerrLabs/Kit/issues/4). They are in git history
+//! at `22f0575`, under `crates/auth/_unmigrated/`.
 
 pub mod jwt;
 pub mod middleware;
