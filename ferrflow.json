@@ -147,6 +147,28 @@
       ]
     },
     {
+      "name": "ferrlabs-http",
+      "path": "crates/http",
+      "changelog": "crates/http/CHANGELOG.md",
+      "versionedFiles": [
+        {
+          "path": "crates/http/Cargo.toml",
+          "format": "toml"
+        },
+        {
+          "path": "Cargo.toml",
+          "format": "txt",
+          "selector": "(?m)^ferrlabs-http = .*version = \"([^\"]+)\""
+        }
+      ],
+      "publishers": [
+        {
+          "kind": "cargo",
+          "noVerify": true
+        }
+      ]
+    },
+    {
       "name": "ferrlabs-oauth",
       "path": "crates/oauth",
       "changelog": "crates/oauth/CHANGELOG.md",
@@ -386,28 +408,6 @@
       ],
       "dependsOn": [
         "ferrlabs-id"
-      ],
-      "publishers": [
-        {
-          "kind": "cargo",
-          "noVerify": true
-        }
-      ]
-    },
-    {
-      "name": "ferrlabs-http",
-      "path": "crates/http",
-      "changelog": "crates/http/CHANGELOG.md",
-      "versionedFiles": [
-        {
-          "path": "crates/http/Cargo.toml",
-          "format": "toml"
-        },
-        {
-          "path": "Cargo.toml",
-          "format": "txt",
-          "selector": "(?m)^ferrlabs-http = .*version = \"([^\"]+)\""
-        }
       ],
       "publishers": [
         {

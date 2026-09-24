@@ -1583,6 +1583,8 @@ dependencies = [
  "anyhow",
  "base64 0.23.1",
  "ferrlabs-errors",
+ "ferrlabs-http",
+ "jsonwebtoken",
  "rand 0.10.3",
  "reqwest",
  "serde",

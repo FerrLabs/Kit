@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "OAuth 2.0 authorization-code clients for Google, GitHub and Discord"
+description = "OAuth 2.0 and OpenID Connect authorization-code clients, for fixed providers and for per-tenant issuers"
 
 [features]
 default = ["errors"]
@@ -14,6 +14,8 @@ errors = ["dep:ferrlabs-errors", "dep:anyhow"]
 
 [dependencies]
 base64 = { workspace = true }
+ferrlabs-http = { workspace = true }
+jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto"] }
 rand = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
