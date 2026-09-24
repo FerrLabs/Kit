@@ -1388,7 +1388,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1505,7 +1505,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-github"
-version = "2.2.1"
+version = "2.3.0"
 dependencies = [
  "chrono",
  "dashmap",
@@ -1562,7 +1562,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1578,7 +1578,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-oauth"
-version = "1.3.1"
+version = "1.4.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
