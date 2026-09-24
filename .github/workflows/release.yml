@@ -20,11 +20,12 @@ concurrency:
 
 jobs:
   release:
-    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@b6a08e6055076c18cfa7b8f80c9925275ed407fe # main
+    uses: FerrLabs/.github/.github/workflows/reusable-ferrflow-release.yml@4d44329e42614cfff3293fa60116eda36d4f6a1d # main
     with:
       dry-run: ${{ inputs.dry_run || false }}
       # ferrflow.json sets deferPublish: true — publish runs as a separate,
       # re-runnable job so a flaky Kellnr publish (index lag) doesn't leave a
       # crate tagged-but-unpublished.
       deferred-publish: true
+      crates-io-trusted-publishing: true
     secrets: inherit
