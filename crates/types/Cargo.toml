@@ -6,12 +6,15 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "Shared domain types for the FerrLabs platform (User, Organization, Membership, Plan)."
+description = "Shared domain types for the FerrLabs platform (User, Organization, Membership, Plan, the contact request contract)."
 
 [dependencies]
 serde = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

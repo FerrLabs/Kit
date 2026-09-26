@@ -4,6 +4,8 @@
 //! these types via the Kit workspace dependency, so `User`, `Organization`,
 //! and friends are guaranteed byte-compatible across products.
 
+pub mod contact;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
