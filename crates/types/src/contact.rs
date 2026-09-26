@@ -9,7 +9,7 @@ pub const FROM_URL_MAX: usize = 2048;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Product {
+pub enum ContactProduct {
     Ferrlabs,
     Ferrflow,
     Ferrvault,
@@ -21,7 +21,7 @@ pub enum Product {
     AwesomeAlternatives,
 }
 
-impl Product {
+impl ContactProduct {
     #[must_use]
     pub fn label(self) -> &'static str {
         match self {
@@ -79,10 +79,9 @@ impl RequestKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct ContactRequest {
     pub request_id: Uuid,
-    pub product: Product,
+    pub product: ContactProduct,
     pub kind: RequestKind,
     pub subject: String,
     pub message: String,
@@ -106,25 +105,26 @@ pub enum InvalidContact {
 
 impl std::fmt::Display for InvalidContact {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Self::Subject => "subject must be 1 to 200 characters",
-            Self::Message => "message must be 1 to 10000 characters",
-            Self::Email => "email is not a valid address",
-            Self::Name => "name must be at most 100 characters",
-            Self::FromUrl => "from_url must be an https URL of at most 2048 characters",
-        })
+        match self {
+            Self::Subject => write!(f, "subject must be 1 to {SUBJECT_MAX} characters"),
+            Self::Message => write!(f, "message must be 1 to {MESSAGE_MAX} characters"),
+            Self::Email => f.write_str("email is not a valid address"),
+            Self::Name => write!(f, "name must be at most {NAME_MAX} characters"),
+            Self::FromUrl => write!(
+                f,
+                "from_url must be an https URL of at most {FROM_URL_MAX} characters"
+            ),
+        }
     }
 }
 
 impl std::error::Error for InvalidContact {}
 
-fn within(text: &str, min: usize, max: usize) -> bool {
-    let len = text.trim().chars().count();
-    len >= min && len <= max
+fn filled_within(text: &str, max: usize) -> bool {
+    !text.trim().is_empty() && text.chars().count() <= max
 }
 
 fn plausible_email(email: &str) -> bool {
-    let email = email.trim();
     if email.chars().count() > EMAIL_MAX || email.chars().any(char::is_whitespace) {
         return false;
     }
@@ -135,7 +135,7 @@ fn plausible_email(email: &str) -> bool {
 }
 
 fn https_url(url: &str) -> bool {
-    url.len() <= FROM_URL_MAX
+    url.chars().count() <= FROM_URL_MAX
         && url
             .strip_prefix("https://")
             .is_some_and(|rest| !rest.is_empty() && !rest.chars().any(char::is_whitespace))
@@ -143,10 +143,10 @@ fn https_url(url: &str) -> bool {
 
 impl ContactRequest {
     pub fn check(&self) -> Result<(), InvalidContact> {
-        if !within(&self.subject, 1, SUBJECT_MAX) {
+        if !filled_within(&self.subject, SUBJECT_MAX) {
             return Err(InvalidContact::Subject);
         }
-        if !within(&self.message, 1, MESSAGE_MAX) {
+        if !filled_within(&self.message, MESSAGE_MAX) {
             return Err(InvalidContact::Message);
         }
         if !plausible_email(&self.email) {
@@ -155,7 +155,7 @@ impl ContactRequest {
         if self
             .name
             .as_deref()
-            .is_some_and(|name| !within(name, 0, NAME_MAX))
+            .is_some_and(|name| name.chars().count() > NAME_MAX)
         {
             return Err(InvalidContact::Name);
         }
@@ -178,7 +178,7 @@ mod tests {
     fn request() -> ContactRequest {
         ContactRequest {
             request_id: Uuid::nil(),
-            product: Product::Ferrtrack,
+            product: ContactProduct::Ferrtrack,
             kind: RequestKind::Bug,
             subject: "Board does not load".into(),
             message: "It spins forever.".into(),
@@ -206,6 +206,15 @@ mod tests {
             ..request()
         };
         assert_eq!(long.check(), Err(InvalidContact::Message));
+        let padded = ContactRequest {
+            subject: format!("   {}   ", "x".repeat(SUBJECT_MAX)),
+            ..request()
+        };
+        assert_eq!(
+            padded.check(),
+            Err(InvalidContact::Subject),
+            "a value the crate accepts must fit a column sized from its max"
+        );
     }
 
     #[test]
@@ -248,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn the_wire_format_is_snake_case_and_refuses_unknown_fields() {
+    fn the_wire_format_is_snake_case_and_tolerates_fields_a_newer_sender_adds() {
         let json = r#"{"request_id":"00000000-0000-0000-0000-000000000000","product":"awesome_alternatives","kind":"billing","subject":"s","message":"m","email":"ada@example.com"}"#;
         let parsed: ContactRequest = serde_json::from_str(json).expect("a valid request");
         assert_eq!(
@@ -256,7 +265,10 @@ mod tests {
             ["contact", "awesome-alternatives", "billing"]
         );
 
-        let extra = json.replace('}', r#","assignee_id":"x"}"#);
-        assert!(serde_json::from_str::<ContactRequest>(&extra).is_err());
+        let newer = json.replace('}', r#","attachment_count":2}"#);
+        assert_eq!(
+            serde_json::from_str::<ContactRequest>(&newer).expect("an extra field is ignored"),
+            parsed
+        );
     }
 }
