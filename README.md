@@ -27,7 +27,7 @@ crates.io.
 | [`github`](crates/github) | GitHub App auth: scoped installation access tokens, and verifying a user actually owns the installation they are claiming |
 | [`permissions`](crates/permissions) | Typed scope and capability checks. A closed enum of every scope on the platform, so adding one is a crate change rather than a typo in a string literal |
 | [`id`](crates/id) | Typed id newtypes over UUID, turning cross-tenant and IDOR mistakes into compile errors |
-| [`types`](crates/types) | Shared domain types: `User`, `Organization`, `Membership`, `Plan` |
+| [`types`](crates/types) | Shared domain types: `User`, `Organization`, `Membership`, `Plan`, and `contact::ContactRequest`, the contact-form contract between FerrLabs-Cloud and FerrTrack |
 | [`license`](crates/license) | Offline ed25519-signed license keys for self-host editions: mint, verify, gate |
 
 ### Data
