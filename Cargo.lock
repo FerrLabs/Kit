@@ -1388,7 +1388,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "3.1.0"
+version = "3.2.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1423,7 +1423,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-billing"
-version = "2.5.1"
+version = "2.6.0"
 dependencies = [
  "anyhow",
  "async-stripe",
@@ -1478,7 +1478,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-db"
-version = "2.6.1"
+version = "2.7.0"
 dependencies = [
  "anyhow",
  "ferrlabs-errors",
@@ -1562,7 +1562,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "3.1.0"
+version = "3.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1671,7 +1671,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-types"
-version = "2.5.1"
+version = "2.6.0"
 dependencies = [
  "chrono",
  "serde",

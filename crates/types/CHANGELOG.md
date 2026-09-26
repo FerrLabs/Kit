@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-types` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.0] - 2026-09-26
+
+### Features
+
+- feat(types): contact request contract shared by the contact form sender and FerrTrack (#320)
+
 ## [2.5.1] - 2026-09-07
 
 ## [2.5.0] - 2026-09-04
