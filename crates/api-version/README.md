@@ -63,4 +63,4 @@ deserialized, so streaming responses and large bodies are untouched. Only a call
 
 ## Status
 
-Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit), in production across six APIs. MPL-2.0.
+Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit), in production across six APIs. MIT OR Apache-2.0.

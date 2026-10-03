@@ -7,7 +7,7 @@
 Auth, permissions, database, errors, telemetry, billing, queues.<br />
 Written once here, consumed everywhere, never copy-pasted between products.
 
-[![License](https://img.shields.io/badge/license-MPL--2.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
 
 [FerrLabs](https://github.com/FerrLabs) | [Changelog](https://ferrlabs.com/changelog/)
 
@@ -62,7 +62,7 @@ crates.io.
 
 ## Consumption
 
-Every crate is published to [crates.io](https://crates.io/search?q=ferrlabs-) under MPL-2.0:
+Every crate is published to [crates.io](https://crates.io/search?q=ferrlabs-) under `MIT OR Apache-2.0`:
 
 ```toml
 [dependencies]
@@ -101,4 +101,15 @@ cargo fmt --check
 
 ## License
 
-[MPL-2.0](LICENSE)
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
+the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without
+any additional terms or conditions.
