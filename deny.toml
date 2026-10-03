@@ -40,7 +40,6 @@ allow = [
   "CC0-1.0",
   "CDLA-Permissive-2.0",
   "Zlib",
-  "MPL-2.0",
   "LicenseRef-FerrLabs-Proprietary",
 ]
 confidence-threshold = 0.93

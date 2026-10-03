@@ -33,4 +33,4 @@ UUID string, and implements `Display`, `FromStr`, and conversion both ways with 
 
 ## Status
 
-Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit). MPL-2.0.
+Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit). MIT OR Apache-2.0.

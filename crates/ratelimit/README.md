@@ -44,4 +44,4 @@ test refill behaviour without sleeping.
 
 ## Status
 
-Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit). MPL-2.0.
+Part of [FerrLabs Kit](https://github.com/FerrLabs/Kit). MIT OR Apache-2.0.
