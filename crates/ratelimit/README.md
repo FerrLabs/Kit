@@ -16,6 +16,22 @@ if !limiter.check(&ip_key(addr)) {
 `Quota::new(30, 10.0)` is a bucket of 30 that refills at 10 per second, so a client can burst to 30
 and then sustain 10.
 
+Every key gets a bucket, so a limiter keyed on client IPs grows for as long as the process runs.
+Call `prune()` on a timer: it drops the buckets that have refilled to capacity, which behave exactly
+like keys never seen, and keeps the ones still limiting someone.
+
+```rust
+let limiter = Arc::new(InMemoryRateLimiter::new(Quota::new(30, 10.0)));
+let pruned = Arc::clone(&limiter);
+tokio::spawn(async move {
+    let mut every = tokio::time::interval(Duration::from_secs(60));
+    loop {
+        every.tick().await;
+        pruned.prune();
+    }
+});
+```
+
 ## Client IP behind a proxy
 
 `TrustedProxies` is a count of how many proxy hops sit in front of you, because each one appends

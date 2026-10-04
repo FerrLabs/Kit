@@ -119,6 +119,15 @@ impl<C: Clock> InMemoryRateLimiter<C> {
             false
         }
     }
+
+    pub fn prune(&self) {
+        let now = self.clock.now_secs();
+        let capacity = f64::from(self.quota.capacity);
+        self.buckets.retain(|_, bucket| {
+            let elapsed = (now - bucket.last_refill).max(0.0);
+            bucket.tokens + elapsed * self.quota.refill_per_sec < capacity
+        });
+    }
 }
 
 impl<C: Clock> RateLimiter for InMemoryRateLimiter<C> {
@@ -192,6 +201,42 @@ mod tests {
         assert!(rl.check("x"));
         assert!(!rl.check("x"));
         assert!(rl.check("y"));
+    }
+
+    #[test]
+    fn prune_drops_buckets_that_have_refilled_and_keeps_the_rest() {
+        let rl = InMemoryRateLimiter::with_clock(Quota::new(2, 1.0), TestClock::new());
+        assert!(rl.check("idle"));
+        rl.clock.advance(1.0);
+        assert!(rl.check("busy"));
+        assert!(rl.check("busy"));
+
+        rl.prune();
+
+        assert!(!rl.buckets.contains_key("idle"));
+        assert!(rl.buckets.contains_key("busy"));
+        assert!(!rl.check("busy"));
+    }
+
+    #[test]
+    fn a_pruned_key_starts_again_with_a_full_bucket() {
+        let rl = InMemoryRateLimiter::with_clock(Quota::new(2, 1.0), TestClock::new());
+        assert!(rl.check("k"));
+        assert!(rl.check("k"));
+        rl.clock.advance(2.0);
+        rl.prune();
+        assert!(rl.check("k"));
+        assert!(rl.check("k"));
+        assert!(!rl.check("k"));
+    }
+
+    #[test]
+    fn prune_keeps_a_drained_bucket_that_never_refills() {
+        let rl = InMemoryRateLimiter::with_clock(Quota::new(1, 0.0), TestClock::new());
+        assert!(rl.check("k"));
+        rl.clock.advance(3600.0);
+        rl.prune();
+        assert!(!rl.check("k"));
     }
 
     #[test]
