@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-webhooks` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.0] - 2026-10-05
+
+### Features
+
+- feat(webhooks): sign and verify timestamped signatures (#330)
+
 ## [2.0.0] - 2026-08-05
 
 ### Breaking Changes

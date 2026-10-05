@@ -1690,7 +1690,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-webhooks"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "dashmap",
  "hex",
