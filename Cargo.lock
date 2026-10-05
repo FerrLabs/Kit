@@ -1596,7 +1596,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-permissions"
-version = "2.5.1"
+version = "2.6.0"
 dependencies = [
  "criterion",
  "ferrlabs-errors",

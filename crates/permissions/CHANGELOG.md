@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-permissions` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.0] - 2026-10-05
+
+### Features
+
+- feat(permissions): intersect two scope sets (#331)
+
 ## [2.5.1] - 2026-09-07
 
 ## [2.5.0] - 2026-09-04
