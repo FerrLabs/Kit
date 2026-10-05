@@ -76,6 +76,61 @@ pub fn sign_github(secret: &[u8], body: &[u8]) -> String {
     format!("sha256={}", hex::encode(compute(secret, body)))
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TimestampedError {
+    MalformedTimestamp,
+    Stale,
+    Signature(SignatureError),
+}
+
+impl std::fmt::Display for TimestampedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MalformedTimestamp => f.write_str("malformed timestamp header"),
+            Self::Stale => f.write_str("timestamp outside the accepted window"),
+            Self::Signature(e) => e.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for TimestampedError {}
+
+fn timestamped_input(timestamp: i64, body: &[u8]) -> Vec<u8> {
+    let mut input = format!("{timestamp}.").into_bytes();
+    input.extend_from_slice(body);
+    input
+}
+
+#[must_use]
+pub fn sign_timestamped(secret: &[u8], timestamp: i64, body: &[u8]) -> String {
+    sign_github(secret, &timestamped_input(timestamp, body))
+}
+
+pub fn verify_timestamped(
+    secret: &[u8],
+    body: &[u8],
+    timestamp_header: &str,
+    signature_header: &str,
+    now: i64,
+    max_skew_secs: i64,
+) -> Result<Vec<u8>, TimestampedError> {
+    let timestamp: i64 = timestamp_header
+        .trim()
+        .parse()
+        .map_err(|_| TimestampedError::MalformedTimestamp)?;
+    if now.abs_diff(timestamp) > max_skew_secs.unsigned_abs() {
+        return Err(TimestampedError::Stale);
+    }
+    verify_github(
+        secret,
+        &timestamped_input(timestamp, body),
+        signature_header,
+    )
+    .map_err(TimestampedError::Signature)?;
+    let hex_part = signature_header.trim().trim_start_matches("sha256=");
+    hex::decode(hex_part).map_err(|_| TimestampedError::Signature(SignatureError::MalformedHeader))
+}
+
 /// Tracks which webhook deliveries have already been processed so redeliveries
 /// are dropped.
 pub trait DeliveryStore: Send + Sync {
@@ -117,6 +172,84 @@ mod tests {
 
     const SECRET: &[u8] = b"it's a secret to everybody";
     const BODY: &[u8] = b"Hello, World!";
+
+    const CENTRAL_SECRET: &[u8] = b"central-shared-secret";
+    const CENTRAL_BODY: &[u8] = br#"{"op":"replace_user"}"#;
+    const CENTRAL_TS: i64 = 1_760_000_000;
+    const CENTRAL_SIGNATURE: &str =
+        "sha256=8786315dfd6797d7aef24b58bab8cef65b58099552efe96316e94a689821014a";
+
+    #[test]
+    fn timestamped_signing_matches_an_independent_hmac_of_ts_dot_body() {
+        assert_eq!(
+            sign_timestamped(CENTRAL_SECRET, CENTRAL_TS, CENTRAL_BODY),
+            CENTRAL_SIGNATURE
+        );
+    }
+
+    #[test]
+    fn timestamped_verification_returns_the_signature_bytes() {
+        let signature = verify_timestamped(
+            CENTRAL_SECRET,
+            CENTRAL_BODY,
+            "1760000000",
+            CENTRAL_SIGNATURE,
+            CENTRAL_TS + 30,
+            60,
+        )
+        .unwrap();
+        assert_eq!(
+            hex::encode(signature),
+            CENTRAL_SIGNATURE.trim_start_matches("sha256=")
+        );
+    }
+
+    #[test]
+    fn timestamped_verification_refuses_a_stale_or_future_timestamp() {
+        for now in [CENTRAL_TS + 61, CENTRAL_TS - 61] {
+            assert_eq!(
+                verify_timestamped(
+                    CENTRAL_SECRET,
+                    CENTRAL_BODY,
+                    "1760000000",
+                    CENTRAL_SIGNATURE,
+                    now,
+                    60
+                ),
+                Err(TimestampedError::Stale)
+            );
+        }
+    }
+
+    #[test]
+    fn a_replayed_body_with_a_fresh_timestamp_header_does_not_verify() {
+        assert_eq!(
+            verify_timestamped(
+                CENTRAL_SECRET,
+                CENTRAL_BODY,
+                "1760000050",
+                CENTRAL_SIGNATURE,
+                CENTRAL_TS + 50,
+                60
+            ),
+            Err(TimestampedError::Signature(SignatureError::Mismatch))
+        );
+    }
+
+    #[test]
+    fn timestamped_verification_refuses_a_malformed_timestamp() {
+        assert_eq!(
+            verify_timestamped(
+                CENTRAL_SECRET,
+                CENTRAL_BODY,
+                "yesterday",
+                CENTRAL_SIGNATURE,
+                CENTRAL_TS,
+                60
+            ),
+            Err(TimestampedError::MalformedTimestamp)
+        );
+    }
 
     #[test]
     fn github_round_trip_verifies() {
