@@ -426,6 +426,17 @@ impl ScopeSet {
         self.inner.insert(scope)
     }
 
+    #[must_use]
+    pub fn intersection(&self, other: &Self) -> Self {
+        Self {
+            inner: Scope::all()
+                .iter()
+                .copied()
+                .filter(|&scope| self.has(scope) && other.has(scope))
+                .collect(),
+        }
+    }
+
     /// Iterator over the granted scopes, sorted for deterministic
     /// output in JWT claims and audit logs.
     pub fn iter(&self) -> impl Iterator<Item = Scope> + '_ {
@@ -464,6 +475,50 @@ impl AccessDenied {
 
 #[cfg(test)]
 mod tests {
+
+    fn set(scopes: &[Scope]) -> ScopeSet {
+        let mut set = ScopeSet::empty();
+        for &scope in scopes {
+            set.insert(scope);
+        }
+        set
+    }
+
+    #[test]
+    fn intersection_keeps_only_what_both_sides_grant() {
+        let token = set(&[Scope::SitesAdmin, Scope::TokensManage]);
+        let role = set(&[Scope::SitesWrite]);
+        let granted = token.intersection(&role);
+        assert!(granted.has(Scope::SitesWrite));
+        assert!(granted.has(Scope::SitesRead));
+        assert!(!granted.has(Scope::SitesAdmin));
+        assert!(!granted.has(Scope::TokensManage));
+    }
+
+    #[test]
+    fn intersecting_with_a_full_session_changes_nothing() {
+        let token = set(&[Scope::SitesRead]);
+        assert_eq!(
+            token
+                .intersection(&ScopeSet::full_session())
+                .iter()
+                .filter(|s| s.as_str().starts_with("sites:"))
+                .collect::<Vec<_>>(),
+            vec![Scope::SitesRead]
+        );
+        assert!(
+            !token
+                .intersection(&ScopeSet::full_session())
+                .has(Scope::SitesWrite)
+        );
+    }
+
+    #[test]
+    fn intersecting_with_nothing_grants_nothing() {
+        let granted = ScopeSet::full_session().intersection(&ScopeSet::empty());
+        assert!(Scope::all().iter().all(|&scope| !granted.has(scope)));
+    }
+
     use super::*;
 
     #[test]
