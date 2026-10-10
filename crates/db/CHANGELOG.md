@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-db` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.7.1] - 2026-10-10
+
+### Bug Fixes
+
+- fix(deps): update rust crate tracing-opentelemetry to 0.34 (#318)
+
 ## [2.7.0] - 2026-09-26
 
 ## [2.6.1] - 2026-09-07

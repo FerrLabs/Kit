@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.2.1] - 2026-10-10
+
+### Bug Fixes
+
+- fix(deps): update rust crate tracing-opentelemetry to 0.34 (#318)
+
 ## [3.2.0] - 2026-09-26
 
 ## [3.1.0] - 2026-09-24

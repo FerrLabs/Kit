@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.1] - 2026-10-10
+
+### Bug Fixes
+
+- fix(deps): update rust crate tracing-opentelemetry to 0.34 (#318)
+
 ## [2.0.0] - 2026-08-01
 
 ### Breaking Changes
