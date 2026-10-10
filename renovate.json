@@ -5,10 +5,10 @@
   ],
   "packageRules": [
     {
-      "description": "tracing-opentelemetry decides which opentelemetry these crates can use: 0.33.0, the newest, requires opentelemetry ^0.32. Bumping the monorepo alone stops the telemetry crate compiling (SdkTracer no longer satisfies the Tracer bound it needs), so the cap goes with the bridge. Lift both together the day tracing-opentelemetry supports 0.33.",
+      "description": "tracing-opentelemetry decides which opentelemetry these crates can use: 0.34.0, the newest, requires opentelemetry ^0.33. Bumping the monorepo alone stops the telemetry crate compiling (SdkTracer no longer satisfies the Tracer bound it needs), so the cap goes with the bridge. Lift both together the day tracing-opentelemetry supports 0.34.",
       "matchManagers": ["cargo"],
       "matchPackageNames": ["opentelemetry", "opentelemetry_sdk", "opentelemetry-otlp", "opentelemetry-semantic-conventions", "opentelemetry-http", "opentelemetry-proto"],
-      "allowedVersions": "<0.33"
+      "allowedVersions": "<0.34"
     },
     {
       "description": "testcontainers-modules re-exports testcontainers types, so the two have to move together or the resolver fails outright. Group them into one PR.",
