@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-billing` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-10-16
+
+### Breaking Changes
+
+- feat(billing)!: migrate to async-stripe 1.0.0-rc.9 (#342)
+
 ## [2.6.1] - 2026-10-10
 
 ## [2.6.0] - 2026-09-26
