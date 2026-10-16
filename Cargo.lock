@@ -1475,7 +1475,6 @@ dependencies = [
  "anyhow",
  "fred",
  "percent-encoding",
- "rustls-pki-types",
  "serde",
  "serde_json",
  "tokio",

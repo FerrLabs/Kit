@@ -11,7 +11,7 @@
 use std::time::Duration;
 
 use fred::prelude::*;
-use rustls_pki_types::{CertificateDer, pem::PemObject};
+use fred::rustls::pki_types::{CertificateDer, pem::PemObject};
 
 pub use fred;
 
