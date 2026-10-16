@@ -67,11 +67,24 @@ impl GcpKmsClient {
 
     /// Encrypt `plaintext` with the symmetric `CryptoKey` at `key_name`
     /// (full resource path — `projects/*/locations/*/keyRings/*/cryptoKeys/*`).
+    /// `aad` is forwarded as `additionalAuthenticatedData` and must be
+    /// reproduced byte-for-byte on the matching `decrypt` call. Pass `&[]`
+    /// for unbound ciphertexts.
     /// Returns the opaque base64 ciphertext as emitted by GCP.
-    pub async fn encrypt(&self, key_name: &str, plaintext: &[u8]) -> Result<String, KmsError> {
+    pub async fn encrypt(
+        &self,
+        key_name: &str,
+        plaintext: &[u8],
+        aad: &[u8],
+    ) -> Result<String, KmsError> {
         #[derive(Serialize)]
         struct Body {
             plaintext: String,
+            #[serde(
+                rename = "additionalAuthenticatedData",
+                skip_serializing_if = "Option::is_none"
+            )]
+            aad: Option<String>,
         }
         let token = self.bearer().await?;
         let resp = self
@@ -81,6 +94,11 @@ impl GcpKmsClient {
             .bearer_auth(token)
             .json(&Body {
                 plaintext: b64.encode(plaintext),
+                aad: if aad.is_empty() {
+                    None
+                } else {
+                    Some(b64.encode(aad))
+                },
             })
             .send()
             .await
@@ -89,11 +107,22 @@ impl GcpKmsClient {
         Ok(out.ciphertext)
     }
 
-    /// Decrypt `ciphertext` (the string we stored, as returned by `encrypt`).
-    pub async fn decrypt(&self, key_name: &str, ciphertext: &str) -> Result<Vec<u8>, KmsError> {
+    /// Decrypt `ciphertext` (the string we stored, as returned by `encrypt`),
+    /// requiring `aad` to match the value passed at encrypt time.
+    pub async fn decrypt(
+        &self,
+        key_name: &str,
+        ciphertext: &str,
+        aad: &[u8],
+    ) -> Result<Vec<u8>, KmsError> {
         #[derive(Serialize)]
         struct Body<'a> {
             ciphertext: &'a str,
+            #[serde(
+                rename = "additionalAuthenticatedData",
+                skip_serializing_if = "Option::is_none"
+            )]
+            aad: Option<String>,
         }
         let token = self.bearer().await?;
         let resp = self
@@ -101,7 +130,14 @@ impl GcpKmsClient {
             .http
             .post(format!("{KMS_BASE}/{key_name}:decrypt"))
             .bearer_auth(token)
-            .json(&Body { ciphertext })
+            .json(&Body {
+                ciphertext,
+                aad: if aad.is_empty() {
+                    None
+                } else {
+                    Some(b64.encode(aad))
+                },
+            })
             .send()
             .await
             .map_err(KmsError::Http)?;
