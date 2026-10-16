@@ -477,7 +477,7 @@ dependencies = [
  "num",
  "pin-project-lite",
  "rand 0.9.5",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-native-certs 0.8.4",
  "rustls-pki-types",
  "serde",
@@ -1807,7 +1807,7 @@ dependencies = [
  "parking_lot",
  "rand 0.8.8",
  "redis-protocol",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-native-certs 0.8.4",
  "semver",
  "socket2 0.5.10",
@@ -1966,7 +1966,7 @@ dependencies = [
  "hyper-rustls 0.27.10",
  "hyper-util",
  "ring",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -2384,7 +2384,7 @@ dependencies = [
  "http 1.5.0",
  "hyper 1.11.1",
  "hyper-util",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-native-certs 0.8.4",
  "tokio",
  "tokio-rustls 0.26.6",
@@ -3566,7 +3566,7 @@ dependencies = [
  "quinn-proto",
  "quinn-udp",
  "rustc-hash",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "socket2 0.6.5",
  "thiserror 2.0.21",
  "tokio",
@@ -3588,7 +3588,7 @@ dependencies = [
  "rand_pcg",
  "ring",
  "rustc-hash",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-pki-types",
  "slab",
  "thiserror 2.0.21",
@@ -3878,7 +3878,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
@@ -3981,9 +3981,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.45"
+version = "0.23.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634"
+checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
 dependencies = [
  "aws-lc-rs",
  "log",
@@ -4058,7 +4058,7 @@ dependencies = [
  "jni",
  "log",
  "once_cell",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-native-certs 0.8.4",
  "rustls-platform-verifier-android",
  "rustls-webpki 0.103.15",
@@ -4583,7 +4583,7 @@ dependencies = [
  "log",
  "memchr",
  "percent-encoding",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -5021,7 +5021,7 @@ version = "0.26.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db"
 dependencies = [
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "tokio",
 ]
 
@@ -5354,7 +5354,7 @@ dependencies = [
  "base64 0.23.1",
  "log",
  "percent-encoding",
- "rustls 0.23.45",
+ "rustls 0.23.46",
  "rustls-pki-types",
  "ureq-proto",
  "utf8-zero",
