@@ -9,7 +9,6 @@ yanked = "deny"
 # rather than join it.
 ignore = [
   { id = "RUSTSEC-2023-0071", reason = "Marvin timing sidechannel in `rsa`, which has never shipped a fix. Reached only through `jsonwebtoken` in `auth`, `github` and `license`. Removing it means those crates rejecting RSA algorithms outright, tracked in Kit#260." },
-  { id = "RUSTSEC-2025-0134", reason = "`rustls-pemfile` unmaintained, folded upstream into `rustls-pki-types`. Reached as 2.2.0, a direct dependency of `ferrlabs-cache`. Moving it to `rustls-pki-types` is a small migration and the cheapest item in Kit#260." },
 ]
 
 [licenses]

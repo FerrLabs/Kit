@@ -11,6 +11,7 @@
 use std::time::Duration;
 
 use fred::prelude::*;
+use fred::rustls::pki_types::{CertificateDer, pem::PemObject};
 
 pub use fred;
 
@@ -204,8 +205,7 @@ fn percent_encode_userinfo(url: &str) -> String {
 fn rustls_config_with_ca(ca_cert_path: &str) -> anyhow::Result<fred::rustls::ClientConfig> {
     let pem_bytes = std::fs::read(ca_cert_path)
         .map_err(|e| anyhow::anyhow!("failed to read VALKEY_CA_CERT ({ca_cert_path}): {e}"))?;
-    let mut reader = std::io::BufReader::new(pem_bytes.as_slice());
-    let certs: Vec<_> = rustls_pemfile::certs(&mut reader)
+    let certs: Vec<CertificateDer<'static>> = CertificateDer::pem_slice_iter(&pem_bytes)
         .collect::<Result<_, _>>()
         .map_err(|e| anyhow::anyhow!("failed to parse VALKEY_CA_CERT PEM: {e}"))?;
     if certs.is_empty() {
@@ -322,6 +322,46 @@ pub async fn connect(config: &CacheConfig) -> anyhow::Result<CachePool> {
 mod tests {
     use super::*;
     use fred::interfaces::KeysInterface;
+
+    const TEST_CA_PEM: &str = "-----BEGIN CERTIFICATE-----\nMIIBgjCCASmgAwIBAgIUD8yXnSG5WhRIZSjqjL1QY56DdTUwCgYIKoZIzj0EAwIw\nFjEUMBIGA1UEAwwLa2l0LXRlc3QtY2EwIBcNMjYxMDE2MTkwNzQ4WhgPMjEyNjA5\nMjIxOTA3NDhaMBYxFDASBgNVBAMMC2tpdC10ZXN0LWNhMFkwEwYHKoZIzj0CAQYI\nKoZIzj0DAQcDQgAEKL70lKSqYt/lP8MPKJP0DD2xQlp4ngRD96t2Pnu+GUhaiDZG\n9jASr6EWFSpcAx5fM2LOXG7RlBT0wJNOcG/ZRqNTMFEwHQYDVR0OBBYEFNDCD2dB\n+cCE9qj4/Lk/xh+LgtZVMB8GA1UdIwQYMBaAFNDCD2dB+cCE9qj4/Lk/xh+LgtZV\nMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgYjx67LsipXZdPfcZ\n7+H9jfExquyXRJuHOySc30IFxfsCID0pJBgzqUR2yUHrkfKxUgkEuVjfg8P05lGT\ny2yiP6do\n-----END CERTIFICATE-----\n";
+
+    fn pem_file(name: &str, contents: &str) -> std::path::PathBuf {
+        let path =
+            std::env::temp_dir().join(format!("ferrlabs-cache-{}-{name}.pem", std::process::id()));
+        std::fs::write(&path, contents).unwrap();
+        path
+    }
+
+    #[test]
+    fn ca_bundle_with_a_certificate_builds_a_client_config() {
+        let _ = fred::rustls::crypto::ring::default_provider().install_default();
+        let path = pem_file("valid", TEST_CA_PEM);
+        let config = rustls_config_with_ca(path.to_str().unwrap());
+        std::fs::remove_file(&path).unwrap();
+        assert!(config.is_ok());
+    }
+
+    #[test]
+    fn ca_bundle_without_certificates_is_rejected() {
+        let path = pem_file("empty", "");
+        let err = rustls_config_with_ca(path.to_str().unwrap()).unwrap_err();
+        std::fs::remove_file(&path).unwrap();
+        assert!(err.to_string().contains("contains no certificates"));
+    }
+
+    #[test]
+    fn ca_bundle_with_a_corrupt_certificate_is_rejected() {
+        let path = pem_file(
+            "corrupt",
+            "-----BEGIN CERTIFICATE-----\n!!!not base64!!!\n-----END CERTIFICATE-----\n",
+        );
+        let err = rustls_config_with_ca(path.to_str().unwrap()).unwrap_err();
+        std::fs::remove_file(&path).unwrap();
+        assert!(
+            err.to_string()
+                .contains("failed to parse VALKEY_CA_CERT PEM")
+        );
+    }
 
     /// Gate: run only when a local TLS Valkey is available.
     ///
