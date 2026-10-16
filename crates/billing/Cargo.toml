@@ -13,7 +13,10 @@ ferrlabs-errors = { workspace = true }
 ferrlabs-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-async-stripe = { version = "0.41", default-features = false, features = ["runtime-tokio-hyper-rustls", "billing", "checkout"] }
+async-stripe = { version = "1.0.0-rc.9", default-features = false, features = ["rustls-ring", "rustls-tls-native"] }
+async-stripe-billing = { version = "1.0.0-rc.9", features = ["subscription"] }
+async-stripe-core = { version = "1.0.0-rc.9", features = ["customer"] }
+async-stripe-shared = "1.0.0-rc.9"
 hmac = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }

@@ -6,11 +6,13 @@
 //! startup) and never sourced from a process-global here.
 
 use ferrlabs_types::{Plan, Product};
-use stripe::{
-    CancelSubscription, Client, CreateCustomer, CreateSubscription, CreateSubscriptionItems,
-    Customer, CustomerId, Subscription, SubscriptionId, UpdateSubscription,
-    UpdateSubscriptionItems,
+use stripe::Client;
+use stripe_billing::subscription::{
+    CancelSubscription, CreateSubscription, CreateSubscriptionItems, RetrieveSubscription,
+    UpdateSubscription, UpdateSubscriptionItems,
 };
+use stripe_core::customer::{CreateCustomer, RetrieveCustomer, RetrieveCustomerReturned};
+use stripe_shared::{Customer, CustomerId, Subscription, SubscriptionId};
 
 use crate::error::BillingError;
 
@@ -58,16 +60,24 @@ impl BillingClient {
             let customer_id: CustomerId = id
                 .parse()
                 .map_err(|_| BillingError::MissingField("stripe_customer_id"))?;
-            return Ok(Customer::retrieve(&self.client, &customer_id, &[]).await?);
+            return match RetrieveCustomer::new(customer_id)
+                .send(&self.client)
+                .await?
+            {
+                RetrieveCustomerReturned::Customer(customer) => Ok(customer),
+                RetrieveCustomerReturned::DeletedCustomer(_) => {
+                    Err(BillingError::MissingField("customer is deleted"))
+                }
+            };
         }
 
-        let mut params = CreateCustomer::new();
-        params.email = Some(email);
-        let mut metadata = std::collections::HashMap::new();
-        metadata.insert("org_id".to_string(), org_id.to_string());
-        params.metadata = Some(metadata);
-
-        Ok(Customer::create(&self.client, params).await?)
+        let metadata =
+            std::collections::HashMap::from([("org_id".to_string(), org_id.to_string())]);
+        Ok(CreateCustomer::new()
+            .email(email)
+            .metadata(metadata)
+            .send(&self.client)
+            .await?)
     }
 
     /// Create a subscription for a (customer, product price). Stamps org and
@@ -85,14 +95,15 @@ impl BillingClient {
             .parse()
             .map_err(|_| BillingError::MissingField("stripe_customer_id"))?;
 
-        let mut params = CreateSubscription::new(customer);
-        params.items = Some(vec![CreateSubscriptionItems {
-            price: Some(plan.price_id.clone()),
-            ..Default::default()
-        }]);
-        params.metadata = Some(subscription_metadata(org_id, plan));
+        let mut item = CreateSubscriptionItems::new();
+        item.price = Some(plan.price_id.clone());
 
-        Ok(Subscription::create(&self.client, params).await?)
+        Ok(CreateSubscription::new()
+            .customer(customer.to_string())
+            .items(vec![item])
+            .metadata(subscription_metadata(org_id, plan))
+            .send(&self.client)
+            .await?)
     }
 
     /// Swap a subscription onto a new price (tier change). Stripe prorates the
@@ -111,7 +122,9 @@ impl BillingClient {
             .parse()
             .map_err(|_| BillingError::MissingField("stripe_subscription_id"))?;
 
-        let current = Subscription::retrieve(&self.client, &sub_id, &[]).await?;
+        let current = RetrieveSubscription::new(sub_id.clone())
+            .send(&self.client)
+            .await?;
         let item_id = current
             .items
             .data
@@ -119,15 +132,15 @@ impl BillingClient {
             .map(|item| item.id.to_string())
             .ok_or(BillingError::MissingField("subscription has no items"))?;
 
-        let mut params = UpdateSubscription::new();
-        params.items = Some(vec![UpdateSubscriptionItems {
-            id: Some(item_id),
-            price: Some(plan.price_id.clone()),
-            ..Default::default()
-        }]);
-        params.metadata = Some(subscription_metadata(org_id, plan));
+        let mut item = UpdateSubscriptionItems::new();
+        item.id = Some(item_id);
+        item.price = Some(plan.price_id.clone());
 
-        Ok(Subscription::update(&self.client, &sub_id, params).await?)
+        Ok(UpdateSubscription::new(sub_id)
+            .items(vec![item])
+            .metadata(subscription_metadata(org_id, plan))
+            .send(&self.client)
+            .await?)
     }
 
     /// Cancel a subscription immediately.
@@ -141,7 +154,7 @@ impl BillingClient {
         let sub_id: SubscriptionId = subscription_id
             .parse()
             .map_err(|_| BillingError::MissingField("stripe_subscription_id"))?;
-        Ok(Subscription::cancel(&self.client, &sub_id, CancelSubscription::default()).await?)
+        Ok(CancelSubscription::new(sub_id).send(&self.client).await?)
     }
 
     /// Fetch the current state of a subscription.
@@ -155,7 +168,7 @@ impl BillingClient {
         let sub_id: SubscriptionId = subscription_id
             .parse()
             .map_err(|_| BillingError::MissingField("stripe_subscription_id"))?;
-        Ok(Subscription::retrieve(&self.client, &sub_id, &[]).await?)
+        Ok(RetrieveSubscription::new(sub_id).send(&self.client).await?)
     }
 }
 
