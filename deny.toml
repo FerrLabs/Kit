@@ -4,11 +4,12 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-# Every entry is an advisory with no upgrade available, not one we chose not
-# to fix. Kit#260 tracks emptying this list; anything new must fail the build
-# rather than join it.
+# Every entry is an advisory with no semver-compatible upgrade available, not
+# one we chose not to fix. An entry needs a reason that references a tracking
+# issue (Kit#260 tracks emptying this list); anything else must fail the build.
 ignore = [
   { id = "RUSTSEC-2023-0071", reason = "Marvin timing sidechannel in `rsa`, which has never shipped a fix. Reached only through `jsonwebtoken` in `auth`, `github` and `license`. Removing it means those crates rejecting RSA algorithms outright, tracked in Kit#260." },
+  { id = "RUSTSEC-2026-0387", reason = "Timing issues in `crypto-bigint` 0.5.x, fixed only in >=0.7.6. Pinned by `elliptic-curve` 0.13 via `p256`/`p384` in `jsonwebtoken`, so no compatible upgrade exists. Tracked in Kit#260." },
 ]
 
 [licenses]
