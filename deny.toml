@@ -9,6 +9,7 @@ yanked = "deny"
 # rather than join it.
 ignore = [
   { id = "RUSTSEC-2023-0071", reason = "Marvin timing sidechannel in `rsa`, which has never shipped a fix. Reached only through `jsonwebtoken` in `auth`, `github` and `license`. Removing it means those crates rejecting RSA algorithms outright, tracked in Kit#260." },
+  { id = "RUSTSEC-2026-0387", reason = "Timing issues in `crypto-bigint` 0.5.x, fixed only in >=0.7.6. Pinned by `elliptic-curve` 0.13 via `p256`/`p384` in `jsonwebtoken`, so no compatible upgrade exists. Tracked in Kit#260." },
 ]
 
 [licenses]
