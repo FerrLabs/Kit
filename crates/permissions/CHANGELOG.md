@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-permissions` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.6.2] - 2026-10-25
+
+### Bug Fixes
+
+- fix(permissions): keep staff:access out of full_session and the wildcard (#367)
+
 ## [2.6.1] - 2026-10-10
 
 ## [2.6.0] - 2026-10-05
