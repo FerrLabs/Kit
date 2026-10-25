@@ -345,7 +345,8 @@ impl ScopeSet {
         Self::default()
     }
 
-    /// Full set — every known scope. Used by interactive user
+    /// Full set — every known scope except `StaffAccess`, which must be
+    /// inserted explicitly after an `is_staff` check. Used by interactive user
     /// sessions: a logged-in human is trusted with everything they
     /// can do via the UI (which is necessarily scoped by the UI's
     /// own permission checks anyway). API tokens are the only
@@ -353,7 +354,11 @@ impl ScopeSet {
     #[must_use]
     pub fn full_session() -> Self {
         Self {
-            inner: Scope::all().iter().copied().collect(),
+            inner: Scope::all()
+                .iter()
+                .copied()
+                .filter(|&scope| scope != Scope::StaffAccess)
+                .collect(),
         }
     }
 
@@ -395,11 +400,11 @@ impl ScopeSet {
                 }
             })
             .collect();
+        let mut set = Self { inner: parsed };
         if wildcard {
-            Self::full_session()
-        } else {
-            Self { inner: parsed }
+            set.inner.extend(Self::full_session().inner);
         }
+        set
     }
 
     /// True if this set grants `scope` either directly or via an
@@ -537,9 +542,27 @@ mod tests {
     #[test]
     fn full_session_grants_everything() {
         let s = ScopeSet::full_session();
-        for scope in Scope::all() {
+        for scope in Scope::all().iter().filter(|&&s| s != Scope::StaffAccess) {
             assert!(s.has(*scope), "full session missing {scope:?}");
         }
+    }
+
+    #[test]
+    fn full_session_excludes_staff_access() {
+        assert!(!ScopeSet::full_session().has(Scope::StaffAccess));
+    }
+
+    #[test]
+    fn staff_access_can_be_added_to_a_full_session() {
+        let mut s = ScopeSet::full_session();
+        s.insert(Scope::StaffAccess);
+        assert!(s.has(Scope::StaffAccess));
+    }
+
+    #[test]
+    fn explicit_staff_access_survives_the_wildcard() {
+        let s = ScopeSet::from_strings_with_wildcard(["staff:access", "*"]);
+        assert!(s.has(Scope::StaffAccess));
     }
 
     #[test]
@@ -599,16 +622,17 @@ mod tests {
     #[test]
     fn wildcard_in_strings_grants_full_session() {
         let s = ScopeSet::from_strings_with_wildcard(["*"]);
-        assert!(s.has(Scope::StaffAccess));
+        assert!(!s.has(Scope::StaffAccess));
         assert!(s.has(Scope::AgentsAdmin));
     }
 
     #[test]
     fn wildcard_with_other_entries_still_grants_full_session() {
         let s = ScopeSet::from_strings_with_wildcard(["secrets:read", "*", "garbage"]);
-        for scope in Scope::all() {
+        for scope in Scope::all().iter().filter(|&&s| s != Scope::StaffAccess) {
             assert!(s.has(*scope));
         }
+        assert!(!s.has(Scope::StaffAccess));
     }
 
     #[test]
