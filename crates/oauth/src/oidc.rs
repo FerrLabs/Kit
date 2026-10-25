@@ -12,6 +12,7 @@ use url::Url;
 use super::{pkce_challenge_s256, random_token};
 
 const JWKS_MIN_REFRESH: Duration = Duration::from_secs(60);
+const JWKS_MAX_AGE: Duration = Duration::from_secs(3600);
 const CLOCK_LEEWAY_SECS: u64 = 60;
 const DEFAULT_SCOPE: &str = "openid email profile";
 const DISCOVERY_PATH: &str = "/.well-known/openid-configuration";
@@ -430,8 +431,12 @@ impl OidcClient {
     fn cached_keys(&self, kid: Option<&str>) -> Option<JwkSet> {
         let guard = self.jwks.lock().expect("jwks mutex poisoned");
         let cached = guard.as_ref()?;
+        let age = cached.fetched_at.elapsed();
+        if age >= JWKS_MAX_AGE {
+            return None;
+        }
         let serves_kid = kid.is_none_or(|k| cached.set.find(k).is_some());
-        if serves_kid || cached.fetched_at.elapsed() < JWKS_MIN_REFRESH {
+        if serves_kid || age < JWKS_MIN_REFRESH {
             return Some(cached.set.clone());
         }
         None
@@ -763,6 +768,35 @@ mod tests {
             client.cached_keys(Some("rotated-away")).is_none(),
             "past the refresh window an unknown kid must trigger a refetch"
         );
+    }
+
+    #[test]
+    fn a_cached_key_set_expires_after_the_max_age_even_when_the_kid_is_present() {
+        let client = OidcClient::new(
+            metadata(&["RS256"]),
+            "ferrlabs-client",
+            "secret",
+            "https://auth.ferrlabs.com/sso/callback",
+            None,
+        )
+        .unwrap();
+
+        let seed = |age: Duration| {
+            *client.jwks.lock().unwrap() = Some(CachedJwks {
+                set: jwks("test-key"),
+                fetched_at: Instant::now()
+                    .checked_sub(age)
+                    .expect("the test clock is past the epoch"),
+            });
+        };
+
+        seed(JWKS_MAX_AGE - Duration::from_secs(60));
+        assert!(client.cached_keys(Some("test-key")).is_some());
+        assert!(client.cached_keys(None).is_some());
+
+        seed(JWKS_MAX_AGE + Duration::from_secs(1));
+        assert!(client.cached_keys(Some("test-key")).is_none());
+        assert!(client.cached_keys(None).is_none());
     }
 
     #[test]
