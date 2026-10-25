@@ -116,7 +116,40 @@ impl TotpEnrollment {
     /// # Errors
     /// [`TotpError::InvalidConfig`] if the seed/account is invalid.
     pub fn verify_at(&self, code: &str, unix_time: u64) -> Result<bool, TotpError> {
-        Ok(self.totp()?.check(code, unix_time).is_some())
+        Ok(self.verify_step_at(code, unix_time, None)?.is_some())
+    }
+
+    /// Verify `code` at `unix_time` and return the matched step counter.
+    ///
+    /// A step at or before `last_used_step` is rejected, so a code is accepted
+    /// once (RFC 6238 section 5.2). The caller must persist the returned step
+    /// atomically with the login.
+    ///
+    /// # Errors
+    /// [`TotpError::InvalidConfig`] if the seed/account is invalid.
+    pub fn verify_step_at(
+        &self,
+        code: &str,
+        unix_time: u64,
+        last_used_step: Option<u64>,
+    ) -> Result<Option<u64>, TotpError> {
+        Ok(self
+            .totp()?
+            .check(code, unix_time)
+            .filter(|step| last_used_step.is_none_or(|last| *step > last)))
+    }
+
+    /// [`Self::verify_step_at`] against the current system time.
+    ///
+    /// # Errors
+    /// - [`TotpError::InvalidConfig`] if the seed/account is invalid.
+    /// - [`TotpError::ClockError`] if the system clock predates the unix epoch.
+    pub fn verify_step_now(
+        &self,
+        code: &str,
+        last_used_step: Option<u64>,
+    ) -> Result<Option<u64>, TotpError> {
+        self.verify_step_at(code, unix_now()?, last_used_step)
     }
 
     /// Verify a 6-digit `code` against the current system time.
@@ -125,11 +158,7 @@ impl TotpEnrollment {
     /// - [`TotpError::InvalidConfig`] if the seed/account is invalid.
     /// - [`TotpError::ClockError`] if the system clock predates the unix epoch.
     pub fn verify_now(&self, code: &str) -> Result<bool, TotpError> {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|_| TotpError::ClockError)?
-            .as_secs();
-        self.verify_at(code, now)
+        self.verify_at(code, unix_now()?)
     }
 
     /// Generate the current 6-digit code (test/debug helper).
@@ -139,6 +168,13 @@ impl TotpEnrollment {
     pub fn current_code_at(&self, unix_time: u64) -> Result<String, TotpError> {
         Ok(self.totp()?.generate(unix_time).to_string())
     }
+}
+
+fn unix_now() -> Result<u64, TotpError> {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .map_err(|_| TotpError::ClockError)
 }
 
 /// Unseal a stored TOTP seed via `key_provider`.
@@ -274,6 +310,61 @@ mod tests {
         let future = enrollment.current_code_at(t + 2 * TOTP_STEP_SECS).unwrap();
         assert!(!enrollment.verify_at(&stale, t).unwrap());
         assert!(!enrollment.verify_at(&future, t).unwrap());
+    }
+
+    #[test]
+    fn verify_step_returns_matched_step() {
+        let enrollment = TotpEnrollment::generate("user@example.com");
+        let t = 1_700_000_000;
+        let step = t / TOTP_STEP_SECS;
+        let code = enrollment.current_code_at(t).unwrap();
+        assert_eq!(
+            enrollment.verify_step_at(&code, t, None).unwrap(),
+            Some(step)
+        );
+        let prev = enrollment.current_code_at(t - TOTP_STEP_SECS).unwrap();
+        assert_eq!(
+            enrollment.verify_step_at(&prev, t, None).unwrap(),
+            Some(step - 1)
+        );
+    }
+
+    #[test]
+    fn replayed_code_is_rejected_when_last_step_passed() {
+        let enrollment = TotpEnrollment::generate("user@example.com");
+        let t = 1_700_000_000;
+        let code = enrollment.current_code_at(t).unwrap();
+        let step = enrollment
+            .verify_step_at(&code, t, None)
+            .unwrap()
+            .expect("first use verifies");
+        assert_eq!(
+            enrollment.verify_step_at(&code, t, Some(step)).unwrap(),
+            None
+        );
+        assert_eq!(
+            enrollment
+                .verify_step_at(&code, t + TOTP_STEP_SECS, Some(step))
+                .unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn older_step_is_rejected_but_newer_step_accepted() {
+        let enrollment = TotpEnrollment::generate("user@example.com");
+        let t = 1_700_000_000;
+        let step = t / TOTP_STEP_SECS;
+        let prev = enrollment.current_code_at(t - TOTP_STEP_SECS).unwrap();
+        let next = enrollment.current_code_at(t + TOTP_STEP_SECS).unwrap();
+        assert_eq!(
+            enrollment.verify_step_at(&prev, t, Some(step)).unwrap(),
+            None
+        );
+        assert_eq!(
+            enrollment.verify_step_at(&next, t, Some(step)).unwrap(),
+            Some(step + 1)
+        );
     }
 
     #[test]
