@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-auth"
-version = "3.2.2"
+version = "3.2.3"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-middleware"
-version = "3.2.2"
+version = "3.2.3"
 dependencies = [
  "anyhow",
  "axum",
