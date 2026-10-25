@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-oauth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.2] - 2026-10-25
+
+### Bug Fixes
+
+- fix(oauth): expire the cached oidc jwks after one hour (#369)
+
 ## [1.4.1] - 2026-10-10
 
 ## [1.4.0] - 2026-09-24
