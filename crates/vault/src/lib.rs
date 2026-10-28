@@ -17,8 +17,10 @@
 //! # Ok(()) }
 //! ```
 
-use anyhow::{Context, Result, bail};
-use reqwest::{Client, StatusCode};
+use std::fmt;
+
+use anyhow::{Context, Result, anyhow, bail};
+use reqwest::{Client, StatusCode, Url};
 use serde_json::{Value, json};
 
 const SECRET_FIELD: &str = "value";
@@ -42,28 +44,31 @@ impl VaultClient {
         }
     }
 
-    fn data_url(&self, path: &str) -> String {
-        format!(
-            "{}/v1/{}/data/{}",
-            self.addr,
-            self.mount,
-            path.trim_matches('/')
-        )
+    fn data_url(&self, path: &str) -> Result<Url> {
+        self.kv_url("data", path)
     }
 
-    fn metadata_url(&self, path: &str) -> String {
-        format!(
-            "{}/v1/{}/metadata/{}",
-            self.addr,
-            self.mount,
-            path.trim_matches('/')
-        )
+    fn metadata_url(&self, path: &str) -> Result<Url> {
+        self.kv_url("metadata", path)
+    }
+
+    fn kv_url(&self, kind: &str, path: &str) -> Result<Url> {
+        let secret_segments = validated_segments(path)?;
+        let mut url = Url::parse(&self.addr).context("invalid vault address")?;
+        url.path_segments_mut()
+            .map_err(|()| anyhow!("vault address cannot be used as a base url"))?
+            .pop_if_empty()
+            .push("v1")
+            .extend(self.mount.split('/'))
+            .push(kind)
+            .extend(secret_segments);
+        Ok(url)
     }
 
     pub async fn write_secret(&self, path: &str, value: &str) -> Result<()> {
         let resp = self
             .http
-            .post(self.data_url(path))
+            .post(self.data_url(path)?)
             .header("X-Vault-Token", &self.token)
             .json(&json!({ "data": { SECRET_FIELD: value } }))
             .send()
@@ -78,7 +83,7 @@ impl VaultClient {
     pub async fn read_secret(&self, path: &str) -> Result<Option<String>> {
         let resp = self
             .http
-            .get(self.data_url(path))
+            .get(self.data_url(path)?)
             .header("X-Vault-Token", &self.token)
             .send()
             .await
@@ -96,7 +101,7 @@ impl VaultClient {
     pub async fn delete_secret(&self, path: &str) -> Result<()> {
         let resp = self
             .http
-            .delete(self.metadata_url(path))
+            .delete(self.metadata_url(path)?)
             .header("X-Vault-Token", &self.token)
             .send()
             .await
@@ -106,6 +111,45 @@ impl VaultClient {
         }
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum InvalidSecretPath {
+    EmptySegment,
+    DotSegment,
+}
+
+impl fmt::Display for InvalidSecretPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptySegment => f.write_str("secret path contains an empty segment"),
+            Self::DotSegment => f.write_str("secret path contains a `.` or `..` segment"),
+        }
+    }
+}
+
+impl std::error::Error for InvalidSecretPath {}
+
+fn validated_segments(path: &str) -> Result<Vec<&str>, InvalidSecretPath> {
+    let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
+    for segment in &segments {
+        if segment.is_empty() {
+            return Err(InvalidSecretPath::EmptySegment);
+        }
+        if is_dot_segment(segment) {
+            return Err(InvalidSecretPath::DotSegment);
+        }
+    }
+    Ok(segments)
+}
+
+fn is_dot_segment(segment: &str) -> bool {
+    segment
+        .to_ascii_lowercase()
+        .replace("%2e", ".")
+        .chars()
+        .all(|c| c == '.')
 }
 
 fn parse_secret_value(body: &Value) -> Option<String> {
@@ -124,16 +168,93 @@ mod tests {
         VaultClient::new("https://vault.example.com/", "t", "/secret/")
     }
 
+    fn data(c: &VaultClient, path: &str) -> String {
+        c.data_url(path).unwrap().to_string()
+    }
+
+    fn rejection(result: Result<Url>) -> InvalidSecretPath {
+        result.unwrap_err().downcast::<InvalidSecretPath>().unwrap()
+    }
+
     #[test]
     fn builds_kv_v2_urls() {
         let c = client();
         assert_eq!(
-            c.data_url("/ferrfleet/connectors/org/id/"),
+            data(&c, "/ferrfleet/connectors/org/id/"),
             "https://vault.example.com/v1/secret/data/ferrfleet/connectors/org/id"
         );
         assert_eq!(
-            c.metadata_url("ferrfleet/connectors/org/id"),
+            c.metadata_url("ferrfleet/connectors/org/id")
+                .unwrap()
+                .as_str(),
             "https://vault.example.com/v1/secret/metadata/ferrfleet/connectors/org/id"
+        );
+    }
+
+    #[test]
+    fn rejects_traversal_in_every_url_builder() {
+        let c = client();
+        for path in ["a/../../../sys/seal", "..", "../x", "a/..", "./a", "a/./b"] {
+            assert_eq!(
+                rejection(c.data_url(path)),
+                InvalidSecretPath::DotSegment,
+                "{path}"
+            );
+            assert_eq!(
+                rejection(c.metadata_url(path)),
+                InvalidSecretPath::DotSegment,
+                "{path}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_percent_encoded_traversal() {
+        let c = client();
+        for path in ["a/%2e%2e/b", "a/%2E%2E/b", "a/.%2e/b", "a/%2e/b", "%2e%2e"] {
+            assert_eq!(
+                rejection(c.data_url(path)),
+                InvalidSecretPath::DotSegment,
+                "{path}"
+            );
+            assert_eq!(
+                rejection(c.metadata_url(path)),
+                InvalidSecretPath::DotSegment,
+                "{path}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_empty_segments() {
+        let c = client();
+        for path in ["", "/", "a//b", "//double//slash//"] {
+            assert_eq!(
+                rejection(c.data_url(path)),
+                InvalidSecretPath::EmptySegment,
+                "{path}"
+            );
+        }
+    }
+
+    #[test]
+    fn allows_dots_inside_segment_names() {
+        let c = client();
+        assert_eq!(
+            data(&c, "a/.hidden/b..c/file.txt"),
+            "https://vault.example.com/v1/secret/data/a/.hidden/b..c/file.txt"
+        );
+    }
+
+    #[test]
+    fn encodes_reserved_characters_within_a_segment() {
+        let c = client();
+        let url = c.data_url("a/b?x=1#frag/c d%2fe").unwrap();
+        assert_eq!(url.query(), None);
+        assert_eq!(url.fragment(), None);
+        assert_eq!(
+            url.as_str(),
+            "https://vault.example.com/v1/secret/data/a/b%3Fx=1%23frag/c%20d%252fe"
         );
     }
 
@@ -150,22 +271,31 @@ mod tests {
     }
 
     #[test]
-    fn url_building_is_idempotent_on_slashes() {
+    fn url_building_trims_outer_slashes() {
         let c = client();
         assert_eq!(
-            c.data_url("no-leading-slash"),
+            data(&c, "no-leading-slash"),
             "https://vault.example.com/v1/secret/data/no-leading-slash"
         );
         assert_eq!(
-            c.data_url("//double//slash//"),
-            "https://vault.example.com/v1/secret/data/double//slash"
+            data(&c, "//trailing//"),
+            "https://vault.example.com/v1/secret/data/trailing"
         );
     }
 
     #[test]
     fn new_trims_trailing_addr_slash_and_mount_slashes() {
         let c = VaultClient::new("https://v.example.com///", "tok", "//kv//");
-        assert_eq!(c.data_url("p"), "https://v.example.com/v1/kv/data/p");
+        assert_eq!(data(&c, "p"), "https://v.example.com/v1/kv/data/p");
+    }
+
+    #[test]
+    fn keeps_address_path_prefix_and_nested_mount() {
+        let c = VaultClient::new("https://v.example.com/proxy/", "tok", "team/kv");
+        assert_eq!(
+            data(&c, "p"),
+            "https://v.example.com/proxy/v1/team/kv/data/p"
+        );
     }
 
     #[test]
