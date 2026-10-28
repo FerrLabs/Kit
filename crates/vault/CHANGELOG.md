@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-vault` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.1] - 2026-10-28
+
+### Bug Fixes
+
+- fix(vault): reject secret paths that escape the kv mount (#372)
+
 ## [2.0.0] - 2026-08-05
 
 ### Breaking Changes
