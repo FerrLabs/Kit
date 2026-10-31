@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-http` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.1] - 2026-10-31
+
+### Bug Fixes
+
+- fix(http): tighten v6 address filtering and ignore proxy env (#376)
+
 ## [2.1.0] - 2026-09-24
 
 ### Features
