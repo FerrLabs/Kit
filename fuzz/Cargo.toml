@@ -1,0 +1,56 @@
+[package]
+name = "ferrlabs-kit-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+hex = "0.4"
+hmac = "0.13"
+sha2 = "0.11"
+ferrlabs-api-version = { path = "../crates/api-version" }
+ferrlabs-billing = { path = "../crates/billing" }
+ferrlabs-crypto = { path = "../crates/crypto" }
+ferrlabs-webhooks = { path = "../crates/webhooks" }
+
+[workspace]
+
+[[bin]]
+name = "api_version"
+path = "fuzz_targets/api_version.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "billing_event"
+path = "fuzz_targets/billing_event.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stripe_signature"
+path = "fuzz_targets/stripe_signature.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "webhook_signature"
+path = "fuzz_targets/webhook_signature.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "envelope"
+path = "fuzz_targets/envelope.rs"
+test = false
+doc = false
+bench = false
