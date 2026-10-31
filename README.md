@@ -1,12 +1,13 @@
 <div align="center">
 
-# Kit
+<h1><img src=".github/logo.svg" alt="" width="48" height="48" align="absmiddle"> Kit</h1>
 
 **The shared Rust crates every FerrLabs API is built on.**
 
 Auth, permissions, database, errors, telemetry, billing, queues.<br />
 Written once here, consumed everywhere, never copy-pasted between products.
 
+[![CI](https://github.com/FerrLabs/Kit/actions/workflows/ci.yml/badge.svg)](https://github.com/FerrLabs/Kit/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
 
 [FerrLabs](https://github.com/FerrLabs) | [Changelog](https://ferrlabs.com/changelog/)
@@ -29,6 +30,7 @@ crates.io.
 | [`id`](crates/id) | Typed id newtypes over UUID, turning cross-tenant and IDOR mistakes into compile errors |
 | [`types`](crates/types) | Shared domain types: `User`, `Organization`, `Membership`, `Plan`, and `contact::ContactRequest`, the contact-form contract between FerrLabs-Cloud and FerrTrack |
 | [`license`](crates/license) | Offline ed25519-signed license keys for self-host editions: mint, verify, gate |
+| [`mail`](crates/mail) | DKIM signing for outgoing mail, applied before the message reaches the relay |
 
 ### Data
 
@@ -66,7 +68,7 @@ Every crate is published to [crates.io](https://crates.io/search?q=ferrlabs-) un
 
 ```toml
 [dependencies]
-ferrlabs-auth   = "2"
+ferrlabs-auth   = "3"
 ferrlabs-db     = "2"
 ferrlabs-errors = "2"
 ```
