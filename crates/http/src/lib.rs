@@ -145,7 +145,7 @@ fn is_public_unicast_v6(ip: Ipv6Addr) -> bool {
     if (seg[0] & 0xfe00) == 0xfc00 || (seg[0] & 0xffc0) == 0xfe80 || (seg[0] & 0xffc0) == 0xfec0 {
         return false;
     }
-    if seg[0] == 0x2001 && (seg[1] & 0xfe00 == 0 || seg[1] == 0xdb8) {
+    if seg[0] == 0x2001 && ((seg[1] & 0xfe00) == 0 || seg[1] == 0xdb8) {
         return false;
     }
     if seg[0] == 0x3fff && (seg[1] & 0xf000) == 0 {
@@ -164,31 +164,16 @@ fn is_public_unicast_v6(ip: Ipv6Addr) -> bool {
 }
 
 fn embedded_v4(ip: Ipv6Addr) -> Option<Ipv4Addr> {
-    let seg = ip.segments();
-    let from_tail = || {
-        Ipv4Addr::from([
-            (seg[6] >> 8) as u8,
-            seg[6] as u8,
-            (seg[7] >> 8) as u8,
-            seg[7] as u8,
-        ])
-    };
-    if let Some(v4) = ip.to_ipv4_mapped() {
+    if let Some(v4) = ip.to_ipv4() {
         return Some(v4);
     }
-    if seg[..6].iter().all(|s| *s == 0) {
-        return Some(from_tail());
-    }
+    let seg = ip.segments();
+    let o = ip.octets();
     if seg[0] == 0x64 && seg[1] == 0xff9b && seg[2..6].iter().all(|s| *s == 0) {
-        return Some(from_tail());
+        return Some(Ipv4Addr::new(o[12], o[13], o[14], o[15]));
     }
     if seg[0] == 0x2002 {
-        return Some(Ipv4Addr::from([
-            (seg[1] >> 8) as u8,
-            seg[1] as u8,
-            (seg[2] >> 8) as u8,
-            seg[2] as u8,
-        ]));
+        return Some(Ipv4Addr::new(o[2], o[3], o[4], o[5]));
     }
     None
 }
