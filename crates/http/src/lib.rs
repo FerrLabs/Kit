@@ -142,19 +142,55 @@ fn is_public_unicast_v6(ip: Ipv6Addr) -> bool {
         return false;
     }
     let seg = ip.segments();
-    if (seg[0] & 0xfe00) == 0xfc00 {
+    if (seg[0] & 0xfe00) == 0xfc00 || (seg[0] & 0xffc0) == 0xfe80 || (seg[0] & 0xffc0) == 0xfec0 {
         return false;
     }
-    if (seg[0] & 0xffc0) == 0xfe80 {
+    if seg[0] == 0x2001 && (seg[1] & 0xfe00 == 0 || seg[1] == 0xdb8) {
         return false;
     }
-    if seg[0] == 0x2001 && seg[1] == 0xdb8 {
+    if seg[0] == 0x3fff && (seg[1] & 0xf000) == 0 {
         return false;
     }
+    if seg[0] == 0x0100 && seg[1] == 0 && seg[2] == 0 && seg[3] == 0 {
+        return false;
+    }
+    if seg[0] == 0x64 && seg[1] == 0xff9b && seg[2] == 1 {
+        return false;
+    }
+    match embedded_v4(ip) {
+        Some(v4) => is_public_unicast_v4(v4),
+        None => true,
+    }
+}
+
+fn embedded_v4(ip: Ipv6Addr) -> Option<Ipv4Addr> {
+    let seg = ip.segments();
+    let from_tail = || {
+        Ipv4Addr::from([
+            (seg[6] >> 8) as u8,
+            seg[6] as u8,
+            (seg[7] >> 8) as u8,
+            seg[7] as u8,
+        ])
+    };
     if let Some(v4) = ip.to_ipv4_mapped() {
-        return is_public_unicast_v4(v4);
+        return Some(v4);
     }
-    true
+    if seg[..6].iter().all(|s| *s == 0) {
+        return Some(from_tail());
+    }
+    if seg[0] == 0x64 && seg[1] == 0xff9b && seg[2..6].iter().all(|s| *s == 0) {
+        return Some(from_tail());
+    }
+    if seg[0] == 0x2002 {
+        return Some(Ipv4Addr::from([
+            (seg[1] >> 8) as u8,
+            seg[1] as u8,
+            (seg[2] >> 8) as u8,
+            seg[2] as u8,
+        ]));
+    }
+    None
 }
 
 pub async fn safe_get(
@@ -200,6 +236,7 @@ async fn safe_post_form_inner(
     let pinned = resolve_and_validate(host, port).await?;
 
     let pinned_client = Client::builder()
+        .no_proxy()
         .redirect(redirect::Policy::none())
         .resolve(host, pinned)
         .build()?;
@@ -260,6 +297,7 @@ async fn safe_get_inner(
         let pinned = resolve_and_validate(host, port).await?;
 
         let pinned_client = Client::builder()
+            .no_proxy()
             .redirect(redirect::Policy::none())
             .resolve(host, pinned)
             .build()?;
@@ -415,6 +453,40 @@ mod tests {
         assert!(!is_public_unicast(v6("::ffff:10.0.0.1")));
         assert!(!is_public_unicast(v6("::ffff:169.254.169.254")));
         assert!(is_public_unicast(v6("::ffff:8.8.8.8")));
+    }
+
+    #[test]
+    fn blocks_site_local_v6() {
+        assert!(!is_public_unicast(v6("fec0::1")));
+    }
+
+    #[test]
+    fn blocks_nat64_embedding_private_v4() {
+        assert!(!is_public_unicast(v6("64:ff9b::a00:1")));
+        assert!(!is_public_unicast(v6("64:ff9b::169.254.169.254")));
+        assert!(is_public_unicast(v6("64:ff9b::8.8.8.8")));
+        assert!(!is_public_unicast(v6("64:ff9b:1::1")));
+    }
+
+    #[test]
+    fn blocks_6to4_embedding_private_v4() {
+        assert!(!is_public_unicast(v6("2002:7f00:1::1")));
+        assert!(!is_public_unicast(v6("2002:a9fe:a9fe::1")));
+        assert!(is_public_unicast(v6("2002:0808:0808::1")));
+    }
+
+    #[test]
+    fn blocks_ipv4_compatible_v6() {
+        assert!(!is_public_unicast(v6("::127.0.0.1")));
+        assert!(!is_public_unicast(v6("::10.0.0.1")));
+    }
+
+    #[test]
+    fn blocks_teredo_and_special_purpose_v6() {
+        assert!(!is_public_unicast(v6("2001::1")));
+        assert!(!is_public_unicast(v6("2001:2::1")));
+        assert!(!is_public_unicast(v6("100::1")));
+        assert!(!is_public_unicast(v6("3fff::1")));
     }
 
     #[tokio::test]
