@@ -1,7 +1,9 @@
 #![no_main]
 
 use arbitrary::Arbitrary;
-use ferrlabs_webhooks::{sign_github, sign_timestamped, verify_github, verify_hex, verify_timestamped};
+use ferrlabs_webhooks::{
+    sign_github, sign_timestamped, verify_github, verify_hex, verify_timestamped,
+};
 use libfuzzer_sys::fuzz_target;
 
 #[derive(Arbitrary, Debug)]
@@ -52,5 +54,8 @@ fuzz_target!(|input: Input| {
         now,
         skew,
     );
-    assert_eq!(result.is_ok(), now.abs_diff(timestamp) <= skew.unsigned_abs());
+    assert_eq!(
+        result.is_ok(),
+        now.abs_diff(timestamp) <= skew.unsigned_abs()
+    );
 });

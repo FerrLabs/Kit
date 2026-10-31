@@ -31,5 +31,8 @@ fuzz_target!(|input: Input| {
     tampered[at] ^= 1;
     assert!(decrypt_value(&tampered, &dek).is_err());
 
-    assert_eq!(encrypt_value(&input.plaintext, &input.key).is_ok(), input.key.len() == 32);
+    assert_eq!(
+        encrypt_value(&input.plaintext, &input.key).is_ok(),
+        input.key.len() == 32
+    );
 });

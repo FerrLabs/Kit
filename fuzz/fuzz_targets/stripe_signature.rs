@@ -30,15 +30,12 @@ fuzz_target!(|input: Input| {
     let now = i64::from(input.now);
     let tolerance = i64::from(input.tolerance);
 
-    let _ = verify_signature(
-        &input.payload,
-        &input.header,
-        &input.secret,
-        now,
-        tolerance,
-    );
+    let _ = verify_signature(&input.payload, &input.header, &input.secret, now, tolerance);
 
-    let header = format!("t={timestamp},v1={}", sign(&input.secret, timestamp, &input.payload));
+    let header = format!(
+        "t={timestamp},v1={}",
+        sign(&input.secret, timestamp, &input.payload)
+    );
     let within = now.abs_diff(timestamp) <= tolerance.max(0).unsigned_abs();
     let result = verify_signature(&input.payload, &header, &input.secret, now, tolerance);
     assert_eq!(result.is_ok(), within);
