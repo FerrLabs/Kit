@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-testkit` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-11-10
+
+### Breaking Changes
+
+- feat(crypto)!: zeroize keks, deks and cached plaintext (#386)
+
 ## [2.6.2] - 2026-10-10
 
 ### Bug Fixes
