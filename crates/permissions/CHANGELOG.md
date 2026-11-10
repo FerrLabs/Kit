@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-permissions` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.0] - 2026-11-10
+
+### Features
+
+- feat(permissions): add orgs, projects and tokens read/write scopes (#389)
+
 ## [3.0.0] - 2026-11-10
 
 ## [2.6.2] - 2026-10-25
