@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0459"
+reason = "libsqlite3-sys 0.37.0 is in Cargo.lock through sqlx's optional sqlite driver only. Kit enables the sqlx postgres driver alone, so it is never compiled. sqlx 0.9 pins 0.37. Tracked in Kit#383."
