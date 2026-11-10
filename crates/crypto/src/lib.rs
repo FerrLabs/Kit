@@ -26,6 +26,7 @@ use async_trait::async_trait;
 use rand::rand_core::UnwrapErr;
 use rand::{Rng, rngs::SysRng};
 use tokio::sync::Mutex;
+pub use zeroize::Zeroizing;
 
 const NONCE_SIZE: usize = 12;
 
@@ -37,8 +38,8 @@ fn rng() -> impl Rng {
 }
 
 #[must_use]
-pub fn generate_dek() -> Vec<u8> {
-    let mut dek = vec![0u8; 32];
+pub fn generate_dek() -> Zeroizing<Vec<u8>> {
+    let mut dek = Zeroizing::new(vec![0u8; 32]);
     rng().fill_bytes(&mut dek);
     dek
 }
@@ -80,8 +81,8 @@ pub fn decrypt_value(encrypted: &[u8], dek: &[u8]) -> Result<Vec<u8>, anyhow::Er
         .map_err(|e| anyhow::anyhow!("decryption failed: {e}"))
 }
 
-pub fn parse_kek(hex_key: &str) -> Result<Vec<u8>, anyhow::Error> {
-    let bytes = hex::decode(hex_key)?;
+pub fn parse_kek(hex_key: &str) -> Result<Zeroizing<Vec<u8>>, anyhow::Error> {
+    let bytes = Zeroizing::new(hex::decode(hex_key)?);
     if bytes.len() != 32 {
         return Err(anyhow::anyhow!(
             "ENCRYPTION_KEY must be 32 bytes (64 hex chars), got {}",
@@ -105,7 +106,7 @@ pub fn parse_kek(hex_key: &str) -> Result<Vec<u8>, anyhow::Error> {
 #[async_trait]
 pub trait KeyProvider: Send + Sync {
     async fn wrap_dek(&self, plaintext_dek: &[u8]) -> Result<Vec<u8>, anyhow::Error>;
-    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Vec<u8>, anyhow::Error>;
+    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Zeroizing<Vec<u8>>, anyhow::Error>;
 
     /// Cheap liveness probe for the key backend. Called by `/readyz`.
     /// For `LocalKek` this is a no-op; for `GcpKmsKek` it performs (at most)
@@ -137,12 +138,12 @@ pub fn is_gcp_kms_ciphertext(bytes: &[u8]) -> bool {
 /// the raw AES-GCM output — no discriminator prefix (we detect its absence
 /// to route to this backend on unwrap).
 pub struct LocalKek {
-    kek: Vec<u8>,
+    kek: Zeroizing<Vec<u8>>,
 }
 
 impl LocalKek {
     #[must_use]
-    pub fn new(kek: Vec<u8>) -> Self {
+    pub fn new(kek: Zeroizing<Vec<u8>>) -> Self {
         Self { kek }
     }
 }
@@ -152,14 +153,14 @@ impl KeyProvider for LocalKek {
     async fn wrap_dek(&self, plaintext_dek: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
         encrypt_value(plaintext_dek, &self.kek)
     }
-    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
+    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Zeroizing<Vec<u8>>, anyhow::Error> {
         if is_gcp_kms_ciphertext(encrypted_dek) {
             return Err(anyhow::anyhow!(
                 "secret was wrapped by GCP Cloud KMS but the API is running with a local \
                  KEK — switch the backend or run the re-wrap migration"
             ));
         }
-        decrypt_value(encrypted_dek, &self.kek)
+        decrypt_value(encrypted_dek, &self.kek).map(Zeroizing::new)
     }
 }
 
@@ -168,8 +169,57 @@ impl KeyProvider for LocalKek {
 // ---------------------------------------------------------------------------
 
 struct CachedDek {
-    plaintext: Vec<u8>,
+    plaintext: Zeroizing<Vec<u8>>,
     cached_at: Instant,
+}
+
+struct DekCache {
+    entries: HashMap<Vec<u8>, CachedDek>,
+    ttl: Duration,
+    max_entries: usize,
+}
+
+impl DekCache {
+    fn new(ttl: Duration, max_entries: usize) -> Self {
+        Self {
+            entries: HashMap::new(),
+            ttl,
+            max_entries,
+        }
+    }
+
+    fn get(&mut self, key: &[u8]) -> Option<Zeroizing<Vec<u8>>> {
+        let entry = self.entries.get(key)?;
+        if entry.cached_at.elapsed() < self.ttl {
+            return Some(entry.plaintext.clone());
+        }
+        self.entries.remove(key);
+        None
+    }
+
+    fn put(&mut self, key: Vec<u8>, plaintext: Zeroizing<Vec<u8>>) {
+        if self.entries.len() >= self.max_entries {
+            let ttl = self.ttl;
+            self.entries.retain(|_, v| v.cached_at.elapsed() < ttl);
+        }
+        if self.entries.len() >= self.max_entries {
+            self.evict_oldest_half();
+        }
+        self.entries.insert(
+            key,
+            CachedDek {
+                plaintext,
+                cached_at: Instant::now(),
+            },
+        );
+    }
+
+    fn evict_oldest_half(&mut self) {
+        let evict = self.entries.len() - self.max_entries / 2;
+        let mut ages: Vec<Instant> = self.entries.values().map(|v| v.cached_at).collect();
+        let (_, &mut cutoff, _) = ages.select_nth_unstable(evict - 1);
+        self.entries.retain(|_, v| v.cached_at > cutoff);
+    }
 }
 
 pub type SharedKeyProvider = Arc<dyn KeyProvider>;
@@ -190,9 +240,7 @@ pub type SharedKeyProvider = Arc<dyn KeyProvider>;
 pub struct GcpKmsKek {
     client: crate::gcp_kms::GcpKmsClient,
     key_name: String,
-    cache: Mutex<HashMap<Vec<u8>, CachedDek>>,
-    ttl: Duration,
-    max_entries: usize,
+    cache: Mutex<DekCache>,
     /// Last successful health check, if any. `/readyz` re-probes GCP at most
     /// once every 10 s so repeated scrapes don't hammer the KMS quota.
     last_health_ok: Mutex<Option<Instant>>,
@@ -204,45 +252,14 @@ impl GcpKmsKek {
         Self {
             client,
             key_name,
-            cache: Mutex::new(HashMap::new()),
             // 60s: absorbs burst reveals (50 secrets from one vault = 1 GCP
             // KMS call + 49 hits), short enough that a GCP-side key rotation
             // propagates within a minute without operator action.
-            ttl: Duration::from_secs(60),
             // Bounded so a request-flood of distinct ciphertexts can't OOM.
             // 1024 × ~64 bytes ≈ 64 KiB worst case.
-            max_entries: 1024,
+            cache: Mutex::new(DekCache::new(Duration::from_secs(60), 1024)),
             last_health_ok: Mutex::new(None),
         }
-    }
-
-    async fn cache_get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        let mut cache = self.cache.lock().await;
-        if let Some(entry) = cache.get(key) {
-            if entry.cached_at.elapsed() < self.ttl {
-                return Some(entry.plaintext.clone());
-            }
-            cache.remove(key);
-        }
-        None
-    }
-
-    async fn cache_put(&self, key: Vec<u8>, plaintext: Vec<u8>) {
-        let mut cache = self.cache.lock().await;
-        if cache.len() >= self.max_entries {
-            let mut entries: Vec<_> = cache.drain().collect();
-            entries.sort_by_key(|(_, v)| v.cached_at);
-            for (k, v) in entries.into_iter().skip(self.max_entries / 2) {
-                cache.insert(k, v);
-            }
-        }
-        cache.insert(
-            key,
-            CachedDek {
-                plaintext,
-                cached_at: Instant::now(),
-            },
-        );
     }
 }
 
@@ -262,14 +279,14 @@ impl KeyProvider for GcpKmsKek {
         Ok(out)
     }
 
-    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
+    async fn unwrap_dek(&self, encrypted_dek: &[u8]) -> Result<Zeroizing<Vec<u8>>, anyhow::Error> {
         if !is_gcp_kms_ciphertext(encrypted_dek) {
             return Err(anyhow::anyhow!(
                 "secret was wrapped by a local KEK but the API is running against GCP \
                  Cloud KMS — run the re-wrap migration"
             ));
         }
-        if let Some(cached) = self.cache_get(encrypted_dek).await {
+        if let Some(cached) = self.cache.lock().await.get(encrypted_dek) {
             return Ok(cached);
         }
         let ct = std::str::from_utf8(&encrypted_dek[GCP_KMS_PREFIX.len()..])
@@ -279,8 +296,10 @@ impl KeyProvider for GcpKmsKek {
             .decrypt(&self.key_name, ct)
             .await
             .map_err(|e| anyhow::anyhow!("gcp kms decrypt: {e}"))?;
-        self.cache_put(encrypted_dek.to_vec(), plaintext.clone())
-            .await;
+        self.cache
+            .lock()
+            .await
+            .put(encrypted_dek.to_vec(), plaintext.clone());
         Ok(plaintext)
     }
 
@@ -314,8 +333,7 @@ mod tests {
 
     #[tokio::test]
     async fn local_kek_round_trip() {
-        let kek = vec![1u8; 32];
-        let provider = LocalKek::new(kek);
+        let provider = LocalKek::new(Zeroizing::new(vec![1u8; 32]));
         let dek = generate_dek();
         let wrapped = provider.wrap_dek(&dek).await.unwrap();
         let unwrapped = provider.unwrap_dek(&wrapped).await.unwrap();
@@ -324,7 +342,7 @@ mod tests {
 
     #[tokio::test]
     async fn local_kek_refuses_gcp_ciphertext() {
-        let provider = LocalKek::new(vec![1u8; 32]);
+        let provider = LocalKek::new(Zeroizing::new(vec![1u8; 32]));
         let err = provider
             .unwrap_dek(b"gcp-kms:CiQA0xxxx-base64-gcp-ciphertext")
             .await
@@ -415,6 +433,60 @@ mod tests {
     fn parse_kek_rejects_wrong_length() {
         let err = parse_kek(&"00".repeat(16)).unwrap_err();
         assert!(err.to_string().contains("32 bytes"));
+    }
+
+    fn backdate(cache: &mut DekCache, key: &[u8], by: Duration) {
+        let entry = cache.entries.get_mut(key).unwrap();
+        entry.cached_at = Instant::now().checked_sub(by).unwrap();
+    }
+
+    #[test]
+    fn dek_cache_returns_fresh_entries() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 4);
+        cache.put(b"k".to_vec(), Zeroizing::new(vec![9u8; 32]));
+        assert_eq!(cache.get(b"k").unwrap().as_slice(), &[9u8; 32]);
+        assert!(cache.get(b"missing").is_none());
+    }
+
+    #[test]
+    fn dek_cache_drops_expired_entries_on_get() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 4);
+        cache.put(b"k".to_vec(), Zeroizing::new(vec![1u8; 32]));
+        backdate(&mut cache, b"k", Duration::from_secs(61));
+        assert!(cache.get(b"k").is_none());
+        assert!(cache.entries.is_empty());
+    }
+
+    #[test]
+    fn dek_cache_full_evicts_expired_before_live_entries() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 4);
+        for k in 0u8..4 {
+            cache.put(vec![k], Zeroizing::new(vec![k; 32]));
+        }
+        backdate(&mut cache, &[0], Duration::from_secs(120));
+        cache.put(vec![4], Zeroizing::new(vec![4; 32]));
+        assert_eq!(cache.entries.len(), 4);
+        assert!(!cache.entries.contains_key(&[0u8][..]));
+        for k in 1u8..=4 {
+            assert!(cache.entries.contains_key(&[k][..]), "entry {k} evicted");
+        }
+    }
+
+    #[test]
+    fn dek_cache_full_of_live_entries_evicts_oldest_half() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 4);
+        for k in 0u8..4 {
+            cache.put(vec![k], Zeroizing::new(vec![k; 32]));
+            backdate(
+                &mut cache,
+                &[k],
+                Duration::from_secs(u64::from(40 - k * 10)),
+            );
+        }
+        cache.put(vec![4], Zeroizing::new(vec![4; 32]));
+        let mut kept: Vec<u8> = cache.entries.keys().map(|k| k[0]).collect();
+        kept.sort_unstable();
+        assert_eq!(kept, vec![2, 3, 4]);
     }
 
     #[test]

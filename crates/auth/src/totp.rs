@@ -21,7 +21,7 @@
 //! returns which one matched so the caller can mark it used.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use ferrlabs_crypto::SharedKeyProvider;
+use ferrlabs_crypto::{SharedKeyProvider, Zeroizing};
 use sha2::{Digest, Sha256};
 use subtle::ConstantTimeEq;
 use totp_rs::{Algorithm, Builder, Totp};
@@ -52,7 +52,7 @@ pub enum TotpError {
 /// Hold this only long enough to render the provisioning URI / QR and to seal
 /// the seed; do not persist the plaintext `seed`.
 pub struct TotpEnrollment {
-    seed: Vec<u8>,
+    seed: Zeroizing<Vec<u8>>,
     account: String,
 }
 
@@ -60,7 +60,8 @@ impl TotpEnrollment {
     /// Generate a new random 160-bit TOTP seed for `account_email`.
     #[must_use]
     pub fn generate(account_email: &str) -> Self {
-        let seed = rand::random::<[u8; SECRET_BYTES]>().to_vec();
+        let mut seed = Zeroizing::new(vec![0u8; SECRET_BYTES]);
+        rand::fill(seed.as_mut_slice());
         Self {
             seed,
             account: account_email.to_string(),
@@ -69,7 +70,7 @@ impl TotpEnrollment {
 
     /// Rebuild an enrollment from a seed already unsealed from storage.
     #[must_use]
-    pub fn from_seed(seed: Vec<u8>, account_email: &str) -> Self {
+    pub fn from_seed(seed: Zeroizing<Vec<u8>>, account_email: &str) -> Self {
         Self {
             seed,
             account: account_email.to_string(),
@@ -82,7 +83,7 @@ impl TotpEnrollment {
             .with_digits(TOTP_DIGITS)
             .with_skew(TOTP_SKEW)
             .with_step_duration(TOTP_STEP_SECS)
-            .with_secret(self.seed.clone())
+            .with_secret(self.seed.to_vec())
             .with_issuer(Some(ISSUER))
             .with_account_name(self.account.clone())
             .build()
@@ -184,7 +185,7 @@ fn unix_now() -> Result<u64, TotpError> {
 pub async fn unseal_seed(
     key_provider: &SharedKeyProvider,
     sealed: &[u8],
-) -> Result<Vec<u8>, TotpError> {
+) -> Result<Zeroizing<Vec<u8>>, TotpError> {
     key_provider
         .unwrap_dek(sealed)
         .await
@@ -375,7 +376,7 @@ mod tests {
 
     #[tokio::test]
     async fn seed_seal_unseal_round_trips() {
-        let provider: SharedKeyProvider = Arc::new(LocalKek::new(vec![7u8; 32]));
+        let provider: SharedKeyProvider = Arc::new(LocalKek::new(Zeroizing::new(vec![7u8; 32])));
         let enrollment = TotpEnrollment::generate("user@example.com");
         let original_code = enrollment.current_code_at(1_700_000_000).unwrap();
 
@@ -389,12 +390,12 @@ mod tests {
 
     #[tokio::test]
     async fn sealed_seed_is_not_plaintext() {
-        let provider: SharedKeyProvider = Arc::new(LocalKek::new(vec![3u8; 32]));
+        let provider: SharedKeyProvider = Arc::new(LocalKek::new(Zeroizing::new(vec![3u8; 32])));
         let enrollment = TotpEnrollment::generate("user@example.com");
         let sealed = enrollment.seal_seed(&provider).await.unwrap();
         let unsealed = unseal_seed(&provider, &sealed).await.unwrap();
         assert_ne!(
-            sealed, unsealed,
+            sealed, *unsealed,
             "sealed bytes must differ from the raw seed"
         );
         assert_eq!(unsealed.len(), SECRET_BYTES);

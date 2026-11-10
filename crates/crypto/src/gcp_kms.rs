@@ -90,7 +90,11 @@ impl GcpKmsClient {
     }
 
     /// Decrypt `ciphertext` (the string we stored, as returned by `encrypt`).
-    pub async fn decrypt(&self, key_name: &str, ciphertext: &str) -> Result<Vec<u8>, KmsError> {
+    pub async fn decrypt(
+        &self,
+        key_name: &str,
+        ciphertext: &str,
+    ) -> Result<crate::Zeroizing<Vec<u8>>, KmsError> {
         #[derive(Serialize)]
         struct Body<'a> {
             ciphertext: &'a str,
@@ -107,6 +111,7 @@ impl GcpKmsClient {
             .map_err(KmsError::Http)?;
         let out: DecryptResponse = parse(resp).await?;
         b64.decode(&out.plaintext)
+            .map(crate::Zeroizing::new)
             .map_err(|e| KmsError::Protocol(format!("bad base64 in plaintext: {e}")))
     }
 
