@@ -10,5 +10,9 @@ description = "Hashicorp Vault KV v2 client over reqwest for FerrLabs APIs."
 
 [dependencies]
 anyhow = { workspace = true }
+ferrlabs-http = { workspace = true }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

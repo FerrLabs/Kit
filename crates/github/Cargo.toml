@@ -11,6 +11,7 @@ description = "GitHub App authentication: installation access tokens and install
 [dependencies]
 chrono = { workspace = true }
 dashmap = { workspace = true }
+ferrlabs-http = { workspace = true }
 jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto", "use_pem"] }
 reqwest = { workspace = true }
 serde = { workspace = true }

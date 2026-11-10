@@ -37,7 +37,7 @@ impl VaultClient {
     #[must_use]
     pub fn new(addr: &str, token: &str, mount: &str) -> Self {
         Self {
-            http: Client::new(),
+            http: ferrlabs_http::trusted_client(),
             addr: addr.trim_end_matches('/').to_string(),
             token: token.to_string(),
             mount: mount.trim_matches('/').to_string(),
@@ -308,5 +308,23 @@ mod tests {
     fn parse_reads_only_the_value_field() {
         let body = json!({ "data": { "data": { "other": "x" } } });
         assert_eq!(parse_secret_value(&body), None);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn read_times_out_on_a_stalled_vault() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let _server = tokio::spawn(async move {
+            let (_socket, _) = listener.accept().await.unwrap();
+            std::future::pending::<()>().await;
+        });
+
+        let err = VaultClient::new(&format!("http://{addr}"), "t", "secret")
+            .read_secret("a/b")
+            .await
+            .unwrap_err();
+
+        let source = err.downcast_ref::<reqwest::Error>().unwrap();
+        assert!(source.is_timeout(), "{err:?}");
     }
 }

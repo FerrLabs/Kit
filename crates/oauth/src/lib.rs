@@ -189,7 +189,7 @@ impl OAuthClient {
             client_secret: client_secret.into(),
             redirect_uri: redirect_uri.into(),
             scope: scope.unwrap_or_else(|| provider.default_scope().to_string()),
-            http: reqwest::Client::new(),
+            http: ferrlabs_http::trusted_client(),
         }
     }
 

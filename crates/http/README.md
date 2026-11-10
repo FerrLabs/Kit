@@ -28,6 +28,12 @@ let response = safe_get(&client, user_supplied_url, &SafeFetchOpts::default()).a
 
 `is_public_unicast` is exported on its own if you need the address check without the client.
 
+## Fixed endpoints
+
+`trusted_client()` returns a plain `reqwest::Client` with a 5 second connect timeout and a 15 second
+request timeout, for calls to endpoints you configure yourself (OAuth providers, Vault, GitHub) that
+need no SSRF checks but must not hang when the other side stalls.
+
 ## Posting
 
 `safe_post_form` sends a form-encoded POST through the same checks, for the flows where the URL is

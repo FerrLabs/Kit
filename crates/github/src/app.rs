@@ -81,7 +81,7 @@ impl GithubAppAuth {
             app_id,
             key,
             user_agent: user_agent.into(),
-            http: reqwest::Client::new(),
+            http: ferrlabs_http::trusted_client(),
             cache: Arc::new(DashMap::new()),
         })
     }
