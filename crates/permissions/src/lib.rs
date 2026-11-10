@@ -117,6 +117,16 @@ pub enum Scope {
     AgentsAdmin,
 
     // -----------------------------------------------------------------
+    // Platform resources — orgs, projects, tokens
+    // -----------------------------------------------------------------
+    OrgsRead,
+    OrgsWrite,
+    ProjectsRead,
+    ProjectsWrite,
+    TokensRead,
+    TokensWrite,
+
+    // -----------------------------------------------------------------
     // API tokens — meta-scope for managing tokens themselves
     // -----------------------------------------------------------------
     /// Create / rotate / delete API tokens. Held by users (not by the
@@ -149,6 +159,12 @@ impl Scope {
             Self::AgentsRead => "agents:read",
             Self::AgentsRun => "agents:run",
             Self::AgentsAdmin => "agents:admin",
+            Self::OrgsRead => "orgs:read",
+            Self::OrgsWrite => "orgs:write",
+            Self::ProjectsRead => "projects:read",
+            Self::ProjectsWrite => "projects:write",
+            Self::TokensRead => "tokens:read",
+            Self::TokensWrite => "tokens:write",
             Self::TokensManage => "tokens:manage",
         }
     }
@@ -179,6 +195,12 @@ impl Scope {
             "agents:read" => Self::AgentsRead,
             "agents:run" => Self::AgentsRun,
             "agents:admin" => Self::AgentsAdmin,
+            "orgs:read" => Self::OrgsRead,
+            "orgs:write" => Self::OrgsWrite,
+            "projects:read" => Self::ProjectsRead,
+            "projects:write" => Self::ProjectsWrite,
+            "tokens:read" => Self::TokensRead,
+            "tokens:write" => Self::TokensWrite,
             "tokens:manage" => Self::TokensManage,
             _ => return None,
         })
@@ -208,6 +230,12 @@ impl Scope {
             Self::AgentsRead,
             Self::AgentsRun,
             Self::AgentsAdmin,
+            Self::OrgsRead,
+            Self::OrgsWrite,
+            Self::ProjectsRead,
+            Self::ProjectsWrite,
+            Self::TokensRead,
+            Self::TokensWrite,
             Self::TokensManage,
         ]
     }
@@ -230,6 +258,9 @@ impl Scope {
                 | (Self::SitesWrite, Self::SitesRead)
                 | (Self::AgentsAdmin, Self::AgentsRun | Self::AgentsRead)
                 | (Self::AgentsRun, Self::AgentsRead)
+                | (Self::OrgsWrite, Self::OrgsRead)
+                | (Self::ProjectsWrite, Self::ProjectsRead)
+                | (Self::TokensWrite, Self::TokensRead)
                 | (
                     Self::OrgOwner,
                     Self::OrgAdmin | Self::OrgMember | Self::OrgBilling | Self::OrgAuditor,
@@ -581,6 +612,58 @@ mod tests {
         assert!(s.has(Scope::SecretsWrite));
         assert!(s.has(Scope::SecretsRead));
         assert!(!s.has(Scope::IssuesRead));
+    }
+
+    #[test]
+    fn write_implies_read_for_orgs_projects_and_tokens() {
+        for (write, read) in [
+            (Scope::OrgsWrite, Scope::OrgsRead),
+            (Scope::ProjectsWrite, Scope::ProjectsRead),
+            (Scope::TokensWrite, Scope::TokensRead),
+        ] {
+            let mut s = ScopeSet::empty();
+            s.insert(write);
+            assert!(s.has(write));
+            assert!(s.has(read));
+            let mut r = ScopeSet::empty();
+            r.insert(read);
+            assert!(r.has(read));
+            assert!(!r.has(write));
+        }
+    }
+
+    #[test]
+    fn orgs_projects_tokens_scopes_stay_independent() {
+        let mut s = ScopeSet::empty();
+        s.insert(Scope::OrgsWrite);
+        assert!(!s.has(Scope::ProjectsRead));
+        assert!(!s.has(Scope::TokensRead));
+        assert!(!s.has(Scope::TokensManage));
+        assert!(!s.has(Scope::SecretsRead));
+    }
+
+    #[test]
+    fn orgs_projects_tokens_scopes_round_trip_through_strings() {
+        for (scope, name) in [
+            (Scope::OrgsRead, "orgs:read"),
+            (Scope::OrgsWrite, "orgs:write"),
+            (Scope::ProjectsRead, "projects:read"),
+            (Scope::ProjectsWrite, "projects:write"),
+            (Scope::TokensRead, "tokens:read"),
+            (Scope::TokensWrite, "tokens:write"),
+        ] {
+            assert_eq!(scope.as_str(), name);
+            assert_eq!(Scope::parse(name), Some(scope));
+            assert!(Scope::all().contains(&scope));
+        }
+    }
+
+    #[test]
+    fn wildcard_grants_orgs_projects_and_tokens() {
+        let s = ScopeSet::from_strings_with_wildcard(["*"]);
+        assert!(s.has(Scope::OrgsRead));
+        assert!(s.has(Scope::ProjectsWrite));
+        assert!(s.has(Scope::TokensWrite));
     }
 
     #[test]
