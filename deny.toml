@@ -10,6 +10,7 @@ yanked = "deny"
 ignore = [
   { id = "RUSTSEC-2023-0071", reason = "Marvin timing sidechannel in `rsa`, which has never shipped a fix. Reached only through `jsonwebtoken` in `auth`, `github` and `license`. Removing it means those crates rejecting RSA algorithms outright, tracked in Kit#260." },
   { id = "RUSTSEC-2026-0387", reason = "Timing issues in `crypto-bigint` 0.5.x, fixed only in >=0.7.6. Pinned by `elliptic-curve` 0.13 via `p256`/`p384` in `jsonwebtoken`, so no compatible upgrade exists. Tracked in Kit#260." },
+  { id = "RUSTSEC-2026-0440", reason = "`astral-tokio-tar` 0.6.4 is unmaintained and has no safe upgrade. Test-only: reached through `testcontainers` 0.27 in `ferrlabs-testkit`, a dev-dependency of `ferrlabs-queue`. `testcontainers-modules` 0.15 (latest) requires `testcontainers` ^0.27, so the 0.28 bump cannot resolve. Tracked in Kit#382, review by 2027-02-10." },
 ]
 
 [licenses]

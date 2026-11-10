@@ -4,6 +4,8 @@ All notable changes to `ferrlabs-oauth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-11-10
+
 ## [1.4.2] - 2026-10-25
 
 ### Bug Fixes

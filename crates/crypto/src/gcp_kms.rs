@@ -71,7 +71,7 @@ impl GcpKmsClient {
     pub async fn encrypt(&self, key_name: &str, plaintext: &[u8]) -> Result<String, KmsError> {
         #[derive(Serialize)]
         struct Body {
-            plaintext: String,
+            plaintext: crate::Zeroizing<String>,
         }
         let token = self.bearer().await?;
         let resp = self
@@ -80,7 +80,7 @@ impl GcpKmsClient {
             .post(format!("{KMS_BASE}/{key_name}:encrypt"))
             .bearer_auth(token)
             .json(&Body {
-                plaintext: b64.encode(plaintext),
+                plaintext: crate::Zeroizing::new(b64.encode(plaintext)),
             })
             .send()
             .await
@@ -90,7 +90,11 @@ impl GcpKmsClient {
     }
 
     /// Decrypt `ciphertext` (the string we stored, as returned by `encrypt`).
-    pub async fn decrypt(&self, key_name: &str, ciphertext: &str) -> Result<Vec<u8>, KmsError> {
+    pub async fn decrypt(
+        &self,
+        key_name: &str,
+        ciphertext: &str,
+    ) -> Result<crate::Zeroizing<Vec<u8>>, KmsError> {
         #[derive(Serialize)]
         struct Body<'a> {
             ciphertext: &'a str,
@@ -106,7 +110,8 @@ impl GcpKmsClient {
             .await
             .map_err(KmsError::Http)?;
         let out: DecryptResponse = parse(resp).await?;
-        b64.decode(&out.plaintext)
+        b64.decode(out.plaintext.as_bytes())
+            .map(crate::Zeroizing::new)
             .map_err(|e| KmsError::Protocol(format!("bad base64 in plaintext: {e}")))
     }
 
@@ -185,7 +190,7 @@ struct EncryptResponse {
 }
 #[derive(Deserialize)]
 struct DecryptResponse {
-    plaintext: String,
+    plaintext: crate::Zeroizing<String>,
 }
 #[derive(Deserialize)]
 struct AsymmetricSignResponse {

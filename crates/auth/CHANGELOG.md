@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.0.0] - 2026-11-10
+
+### Breaking Changes
+
+- feat(crypto)!: zeroize keks, deks and cached plaintext (#386)
+
 ## [3.2.3] - 2026-10-25
 
 ### Bug Fixes
