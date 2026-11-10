@@ -21,6 +21,7 @@ clap = { version = "4", features = ["derive"], optional = true }
 
 [dev-dependencies]
 ed25519-dalek = { version = "3", features = ["pkcs8", "pem"] }
+proptest.workspace = true
 rand = { workspace = true }
 
 [[bin]]

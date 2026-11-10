@@ -37,6 +37,7 @@ uuid = { workspace = true }
 # failed exactly there: `ferrlabs-testkit` had been published seconds earlier
 # in the same batch and the index had not caught up.
 ferrlabs-testkit = { path = "../testkit" }
+proptest.workspace = true
 
 [features]
 # Gates the Postgres-backed integration tests under tests/. Off by default

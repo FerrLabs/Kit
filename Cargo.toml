@@ -34,6 +34,7 @@ authors = ["FerrLabs"]
 rust-version = "1.85"
 
 [workspace.dependencies]
+proptest = "1"
 # Shared across all crates
 anyhow = "1"
 thiserror = "2"
