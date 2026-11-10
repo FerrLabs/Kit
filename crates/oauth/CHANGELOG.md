@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-oauth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.1] - 2026-11-10
+
+### Bug Fixes
+
+- fix: set connect and request timeouts on oauth, vault and github clients (#384)
+
 ## [2.0.0] - 2026-11-10
 
 ## [1.4.2] - 2026-10-25

@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-http` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.2] - 2026-11-10
+
+### Bug Fixes
+
+- fix: set connect and request timeouts on oauth, vault and github clients (#384)
+
 ## [2.1.1] - 2026-10-31
 
 ### Bug Fixes
