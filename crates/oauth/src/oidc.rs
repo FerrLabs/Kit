@@ -790,7 +790,7 @@ mod tests {
             });
         };
 
-        seed(JWKS_MAX_AGE - Duration::from_secs(60));
+        seed(JWKS_MAX_AGE.saturating_sub(Duration::from_secs(60)));
         assert!(client.cached_keys(Some("test-key")).is_some());
         assert!(client.cached_keys(None).is_some());
 

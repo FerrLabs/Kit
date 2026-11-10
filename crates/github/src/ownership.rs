@@ -49,7 +49,7 @@ impl GithubOauth {
                 None,
             ),
             user_agent: user_agent.into(),
-            http: reqwest::Client::new(),
+            http: ferrlabs_http::trusted_client(),
         }
     }
 

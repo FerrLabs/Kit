@@ -1536,6 +1536,7 @@ version = "3.0.0"
 dependencies = [
  "chrono",
  "dashmap",
+ "ferrlabs-http",
  "ferrlabs-oauth",
  "jsonwebtoken",
  "reqwest",
@@ -1711,8 +1712,10 @@ name = "ferrlabs-vault"
 version = "2.0.1"
 dependencies = [
  "anyhow",
+ "ferrlabs-http",
  "reqwest",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

@@ -69,6 +69,18 @@ impl SafeHttpClient {
     }
 }
 
+pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
+
+#[must_use]
+pub fn trusted_client() -> Client {
+    Client::builder()
+        .connect_timeout(CONNECT_TIMEOUT)
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .expect("reqwest client build")
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct SafeFetchOpts {
     pub timeout: Duration,
@@ -540,5 +552,25 @@ mod tests {
         .await
         .unwrap_err();
         assert!(matches!(err, SafeFetchError::BlockedAddress(_)));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn trusted_client_gives_up_on_a_stalled_server() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let _server = tokio::spawn(async move {
+            let (_socket, _) = listener.accept().await.unwrap();
+            std::future::pending::<()>().await;
+        });
+
+        let started = tokio::time::Instant::now();
+        let err = trusted_client()
+            .get(format!("http://{addr}/"))
+            .send()
+            .await
+            .unwrap_err();
+
+        assert!(err.is_timeout(), "{err:?}");
+        assert!(started.elapsed() >= REQUEST_TIMEOUT);
     }
 }
