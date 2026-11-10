@@ -39,7 +39,6 @@ tokio = { workspace = true, optional = true }
 serde_json = { workspace = true }
 tower = { workspace = true }
 tokio = { workspace = true }
-proptest.workspace = true
 
 [lints]
 workspace = true

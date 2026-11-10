@@ -26,7 +26,6 @@ http = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
 [dev-dependencies]
-proptest.workspace = true
 tokio = { workspace = true }
 
 [features]

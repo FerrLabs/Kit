@@ -28,6 +28,3 @@ anyhow = { workspace = true, optional = true }
 
 [lints]
 workspace = true
-
-[dev-dependencies]
-proptest.workspace = true

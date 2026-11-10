@@ -18,5 +18,4 @@ tokio = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
-proptest.workspace = true
 tokio = { workspace = true }
