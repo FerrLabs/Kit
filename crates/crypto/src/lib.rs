@@ -215,10 +215,16 @@ impl DekCache {
     }
 
     fn evict_oldest_half(&mut self) {
-        let evict = self.entries.len() - self.max_entries / 2;
-        let mut ages: Vec<Instant> = self.entries.values().map(|v| v.cached_at).collect();
-        let (_, &mut cutoff, _) = ages.select_nth_unstable(evict - 1);
-        self.entries.retain(|_, v| v.cached_at > cutoff);
+        let evict = self.entries.len().saturating_sub(self.max_entries / 2);
+        let mut by_age: Vec<(Instant, Vec<u8>)> = self
+            .entries
+            .iter()
+            .map(|(k, v)| (v.cached_at, k.clone()))
+            .collect();
+        by_age.sort_unstable();
+        for (_, key) in by_age.into_iter().take(evict) {
+            self.entries.remove(&key);
+        }
     }
 }
 
@@ -487,6 +493,46 @@ mod tests {
         let mut kept: Vec<u8> = cache.entries.keys().map(|k| k[0]).collect();
         kept.sort_unstable();
         assert_eq!(kept, vec![2, 3, 4]);
+    }
+
+    #[test]
+    fn dek_cache_eviction_with_tied_timestamps_keeps_half() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 1024);
+        let at = Instant::now();
+        for k in 0u16..1024 {
+            cache.entries.insert(
+                k.to_be_bytes().to_vec(),
+                CachedDek {
+                    plaintext: Zeroizing::new(vec![1u8; 32]),
+                    cached_at: at,
+                },
+            );
+        }
+        cache.put(b"new".to_vec(), Zeroizing::new(vec![2u8; 32]));
+        assert_eq!(cache.entries.len(), 513);
+        assert!(cache.entries.contains_key(&b"new"[..]));
+    }
+
+    #[test]
+    fn dek_cache_eviction_with_one_tie_at_cutoff_keeps_half() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 4);
+        for (k, age) in [(0u8, 2u64), (1, 1), (2, 1), (3, 0)] {
+            cache.put(vec![k], Zeroizing::new(vec![k; 32]));
+            backdate(&mut cache, &[k], Duration::from_secs(age));
+        }
+        cache.put(vec![4], Zeroizing::new(vec![4; 32]));
+        assert_eq!(cache.entries.len(), 3);
+        assert!(!cache.entries.contains_key(&[0u8][..]));
+        assert!(cache.entries.contains_key(&[3u8][..]));
+        assert!(cache.entries.contains_key(&[4u8][..]));
+    }
+
+    #[test]
+    fn dek_cache_with_zero_capacity_does_not_panic() {
+        let mut cache = DekCache::new(Duration::from_secs(60), 0);
+        cache.put(b"k".to_vec(), Zeroizing::new(vec![2u8; 32]));
+        cache.put(b"j".to_vec(), Zeroizing::new(vec![3u8; 32]));
+        assert!(cache.get(b"j").is_some());
     }
 
     #[test]
