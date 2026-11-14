@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-telemetry` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.2] - 2026-11-14
+
+### Bug Fixes
+
+- fix(telemetry): extend http duration buckets past 5s for long-poll routes (#391)
+
 ## [2.0.1] - 2026-10-10
 
 ### Bug Fixes
