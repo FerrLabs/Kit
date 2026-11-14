@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.1] - 2026-11-14
+
+### Bug Fixes
+
+- fix(deps): update rust crate jsonwebtoken to v12 (#392)
+
 ## [2.0.0] - 2026-08-01
 
 ### Breaking Changes

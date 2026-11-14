@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-github` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.2] - 2026-11-14
+
+### Bug Fixes
+
+- fix(deps): update rust crate jsonwebtoken to v12 (#392)
+
 ## [3.0.1] - 2026-11-10
 
 ### Bug Fixes

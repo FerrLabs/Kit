@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-auth` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.0.2] - 2026-11-14
+
+### Bug Fixes
+
+- fix(deps): update rust crate jsonwebtoken to v12 (#392)
+
 ## [4.0.1] - 2026-11-10
 
 ## [4.0.0] - 2026-11-10
