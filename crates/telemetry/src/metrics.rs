@@ -54,7 +54,7 @@ static HTTP_REQUEST_DURATION_SECONDS: LazyLock<HistogramVec> = LazyLock::new(|| 
             "HTTP request latency in seconds, labelled by method and matched route.",
         )
         .buckets(vec![
-            0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0,
+            0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0,
         ]),
         &["method", "route"],
         REGISTRY
@@ -237,6 +237,25 @@ mod tests {
                 r#"http_request_duration_seconds_bucket{method="POST",route="/tdd-dur-a""#
             ),
             "duration histogram buckets missing for the route:\n{text}"
+        );
+    }
+
+    #[test]
+    fn long_poll_durations_land_in_a_finite_bucket() {
+        record_request("POST", "/tdd-long-poll", 200, 20.0);
+        let text = gather();
+        let bucket = |le: &str| {
+            format!(
+                r#"http_request_duration_seconds_bucket{{method="POST",route="/tdd-long-poll",le="{le}"}} "#
+            )
+        };
+        assert!(
+            text.contains(&format!("{}0", bucket("10"))),
+            "20s must not fall in le=10:\n{text}"
+        );
+        assert!(
+            text.contains(&format!("{}1", bucket("30"))),
+            "20s must fall in le=30:\n{text}"
         );
     }
 
