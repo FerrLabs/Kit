@@ -15,7 +15,7 @@ errors = ["dep:ferrlabs-errors", "dep:anyhow"]
 [dependencies]
 base64 = { workspace = true }
 ferrlabs-http = { workspace = true }
-jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto"] }
+jsonwebtoken = { version = "12", default-features = false, features = ["rust_crypto"] }
 rand = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
