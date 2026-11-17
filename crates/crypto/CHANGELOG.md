@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-crypto` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.0] - 2026-11-17
+
+### Features
+
+- feat(crypto): add SecretStore for sealing secrets under a KEK (#397)
+
 ## [3.0.0] - 2026-11-10
 
 ### Breaking Changes
