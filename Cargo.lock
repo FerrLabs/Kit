@@ -1586,7 +1586,7 @@ dependencies = [
 
 [[package]]
 name = "ferrlabs-license"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "chrono",
  "clap",
