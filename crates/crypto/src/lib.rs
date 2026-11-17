@@ -13,6 +13,7 @@
 //! [`KeyProvider`] trait for BYOK self-host customers.
 
 pub mod gcp_kms;
+pub mod secret_store;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -25,6 +26,7 @@ use aes_gcm::{
 use async_trait::async_trait;
 use rand::rand_core::UnwrapErr;
 use rand::{Rng, rngs::SysRng};
+pub use secret_store::{SecretStore, SecretStoreError, is_sealed};
 use tokio::sync::Mutex;
 pub use zeroize::Zeroizing;
 
