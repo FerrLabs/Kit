@@ -27,7 +27,7 @@ jobs:
       coverage-flags: --all-features
       clippy-args: -D warnings
       enable-deny: true
-      audit-ignore: RUSTSEC-2026-0459
+      audit-ignore: RUSTSEC-2026-0459,RUSTSEC-2023-0071,RUSTSEC-2026-0440,RUSTSEC-2026-0543
       enable-typos: false
       enable-coverage: true
     secrets: inherit

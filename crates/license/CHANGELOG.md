@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-license` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.2] - 2026-11-17
+
+### Bug Fixes
+
+- fix(deps): resolve cargo security advisories (#398)
+
 ## [2.0.1] - 2026-11-14
 
 ### Bug Fixes

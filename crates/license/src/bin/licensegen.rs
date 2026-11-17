@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn parse_features_trims_and_drops_empties() {
         assert_eq!(parse_features("a, b ,,c "), vec!["a", "b", "c"]);
-        assert!(parse_features("").is_empty());
-        assert!(parse_features("  ,  ").is_empty());
+        assert_eq!(parse_features(""), Vec::<String>::new());
+        assert_eq!(parse_features("  ,  "), Vec::<String>::new());
     }
 }
