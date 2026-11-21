@@ -106,6 +106,7 @@ ferrlabs-api-version = { path = "crates/api-version", version = "1.0.0" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
