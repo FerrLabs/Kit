@@ -4,6 +4,12 @@ All notable changes to `ferrlabs-crypto` will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.1] - 2026-11-24
+
+### Bug Fixes
+
+- fix(deps): update rust crate gcp_auth to 0.13 (#407)
+
 ## [3.1.0] - 2026-11-17
 
 ### Features
