@@ -26,7 +26,7 @@ changes, CI/test/dev-tooling tweaks, doc-only typos, dependency bumps with no
 behaviour change.
 -->
 
-- [ ] Changelog entry added (or N/A — internal-only change)
+- [ ] Changelog entry added (or N/A: internal-only change)
 
 ## Test plan
 
