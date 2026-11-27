@@ -15,3 +15,7 @@ That sets `git config core.hooksPath .githooks` so:
 ## Fuzzing
 
 Targets live in `fuzz/`. Run one with `cargo +nightly fuzz run <target>` (list them with `cargo +nightly fuzz list`). CI runs them nightly via `.github/workflows/fuzz.yml`.
+
+## Contributor License Agreement
+
+Contributions are covered by the [CLA](https://github.com/FerrLabs/.github/blob/main/CLA.md). Sign it once on https://cla.ferrlabs.com, using the link in the `cla` check of your first pull request.
